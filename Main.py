@@ -12,7 +12,7 @@ class Main:
     def __init__(self):
         self.size = self.width, self.height = SIZE_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600))
+        self.manager = pygame_gui.UIManager((600, 600), 'theme.json')
         self.InitUI()
         self.loading_data()
         self.processes()
@@ -99,7 +99,7 @@ class Main:
                     if event.ui_element == self.settings_button:
                         print('Settings pressed')
                     if event.ui_element == self.about_button:
-                        pass
+                        print('About pressed')
                     if event.ui_element == self.exit_button:
                         pygame.quit()
                         sys.exit()
@@ -108,9 +108,13 @@ class Main:
             pygame.display.update()
 
 
-if __name__ == "__main__":
+def main():
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
     music_play()
     Main().run()
     pygame.quit()
+
+
+if __name__ == "__main__":
+    main()

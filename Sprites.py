@@ -47,9 +47,7 @@ class Tile_menu_background(pygame.sprite.Sprite):
         pygame.sprite.Sprite.remove(self, group)
 
     def update(self, *args):
-        if self.rect.x >= -100:
+        if self.rect.x >= -185 and self.rect.y <= 470:
             self.rect.x -= SPEED_TILES_MAIN
         else:
-            pygame.sprite.Sprite.remove(self, menu_sprites)
-
-
+            self.kill()
