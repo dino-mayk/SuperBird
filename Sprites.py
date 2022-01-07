@@ -15,6 +15,7 @@ menu_button_sprites = pygame.sprite.Group()
 player_sprite = pygame.sprite.Group()
 pipe_sprites = pygame.sprite.Group()
 temporary_sprites = pygame.sprite.Group()
+game_button_sprites = pygame.sprite.Group()
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -154,7 +155,7 @@ class Top_pipe(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = Top_pipe.image
         self.rect = self.image.get_rect()
-        self.rect.y = 0
+        self.rect.y = -250
         self.rect.x = WIDTH_SCREEN
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
@@ -189,3 +190,19 @@ class Bottom_pipe(pygame.sprite.Sprite):
             self.rect.x -= SPEED_PIPES
         else:
             self.kill()
+
+
+class Pause_button(pygame.sprite.Sprite):
+    image = load_image('sprites/decoration/game/pause.png', color_key=-1)
+
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = Pause_button.image
+        self.rect = self.image.get_rect()
+        self.rect.x = 540
+        self.rect.y = 540
+
+    def update(self, *args):
+        if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
+                self.rect.collidepoint(args[0].pos):
+            print('Pause_button')

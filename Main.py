@@ -7,6 +7,7 @@ from Sprites import *
 language = "english"
 selected_bird = 'classic'
 selected_background = ''
+points = 0
 
 
 class Main:
@@ -144,6 +145,7 @@ class Game:
         self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
         self.wallUp = load_image("sprites/decoration/game/bottom_pipe.png")
         self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
+        self.pause_button = load_image('sprites/decoration/game/pause.png', color_key=-1)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
@@ -159,7 +161,7 @@ class Game:
         pipe_sprites.draw(self.screen)
         player_sprite.update()
         player_sprite.draw(self.screen)
-        self.font = pygame.font.SysFont("Arial", 50)
+        self.font = pygame.font.SysFont("Orbitron", 50)
         self.screen.blit(self.font.render(str(self.score), -1, '#c76906'), (500, 10))
 
     def show_final(self):
@@ -167,15 +169,65 @@ class Game:
 
     def run(self):
         Player(load_image("sprites/birds/blue_sheet.png"), 4, 1, 50, 50)
+        Pause_button(game_button_sprites)
         clock = pygame.time.Clock()
         pygame.font.init()
         while self.running:
             clock.tick(FPS)
             self.rendering()
             if len(player_sprite) == 0:
-                self.running = False
-                sys.exit()
+                points = self.score
+                Final_Window().run()
             pygame.display.update()
+
+
+class Final_Window:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.processes()
+        self.loading_data()
+
+    def processes(self):
+        self.running = True
+
+    def loading_data(self):
+        self.coin = load_image('sprites/decoration/game/big_coin.png')
+
+    def rendering(self):
+        intro_text = [('Game over', 50, 90), (f'+ {points // 10}', 50, 60),
+                      (f'{points} points', 30, 60),
+                      ('Press the space bar to return to the menu', 60, 23)]
+        self.screen.fill((255, 186, 0))
+        self.screen.blit((self.coin), (180, 230))
+        menu_background_sprites.update()
+        menu_background_sprites.draw(self.screen)
+        text_coord = 50
+        for text, coord, fnt in intro_text:
+            font = pygame.font.SysFont("Orbitron", fnt)
+            string_rendered = font.render(text, 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += coord
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+
+    def run(self):
+        clock = pygame.time.Clock()
+        pygame.font.init()
+        while self.running:
+            clock.tick(FPS)
+            self.rendering()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.running = False
+                        Main().run()
+            pygame.display.update()
+
+
+
 
 
 if __name__ == "__main__":
