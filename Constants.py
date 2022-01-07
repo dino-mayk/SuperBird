@@ -1,11 +1,17 @@
-# screen sizes
+# screen
 WIDTH_SCREEN = 600
 HEIGHT_SCREEN = 600
 SIZE_SCREEN = (WIDTH_SCREEN, HEIGHT_SCREEN)
+FPS = 60
 
-# sprites
+# background
 COUNT_TILES_MAIN = 3
 SPEED_TILES_MAIN = 2
 
-# processes
-FPS = 60
+# game
+JUMP = 10
+GRAVITY = 2
+COUNT_PIPES = 6
+SPEED_PIPES = 2
+LEN_PIPES = 250
+SPACE = 200

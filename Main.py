@@ -1,4 +1,4 @@
-import pygame_gui
+import sys, pygame_gui
 from Sprites import *
 
 
@@ -50,7 +50,7 @@ class Main:
         )
         self.settings_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((150, 290), (300, 60)),
-            text=self.shop_button_text,
+            text=self.settings_button_text,
             manager=self.manager
         )
         self.about_button = pygame_gui.elements.UIButton(
@@ -77,7 +77,7 @@ class Main:
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
         if len(menu_background_sprites) < COUNT_TILES_MAIN:
-            Menu_background_sprite(temporary_sprites)
+            Background_sprite(temporary_sprites)
         menu_background_sprites.update()
         menu_background_sprites.draw(self.screen)
         self.manager.update(self.time_delta)
@@ -102,7 +102,7 @@ class Main:
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.play_button:
                         self.running = False
-                        #Game().run()
+                        Game().run()
                     if event.ui_element == self.shop_button:
                         print('Shop pressed')
                     if event.ui_element == self.settings_button:
@@ -120,9 +120,61 @@ class Main:
                         )
 
                         # это на доработке
+                        self.running = False
+                        sys.exit()
                 menu_button_sprites.update(event)
                 self.manager.process_events(event)
             self.rendering()
+            pygame.display.update()
+
+
+class Game:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.processes()
+        self.loading_data()
+
+    def processes(self):
+        self.running = True
+        self.dead = False
+        self.score = -(COUNT_PIPES // 2)
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
+        self.wallUp = load_image("sprites/decoration/game/bottom_pipe.png")
+        self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        if len(menu_background_sprites) < COUNT_TILES_MAIN:
+            Background_sprite(temporary_sprites)
+        menu_background_sprites.update()
+        menu_background_sprites.draw(self.screen)
+        if len(pipe_sprites) < COUNT_PIPES:
+            self.score += 1
+            Top_pipe(temporary_sprites)
+            Bottom_pipe(temporary_sprites)
+        pipe_sprites.update()
+        pipe_sprites.draw(self.screen)
+        player_sprite.update()
+        player_sprite.draw(self.screen)
+        self.font = pygame.font.SysFont("Arial", 50)
+        self.screen.blit(self.font.render(str(self.score), -1, '#c76906'), (500, 10))
+
+    def show_final(self):
+        pass
+
+    def run(self):
+        Player(load_image("sprites/birds/blue_sheet.png"), 4, 1, 50, 50)
+        clock = pygame.time.Clock()
+        pygame.font.init()
+        while self.running:
+            clock.tick(FPS)
+            self.rendering()
+            if len(player_sprite) == 0:
+                self.running = False
+                sys.exit()
             pygame.display.update()
 
 
