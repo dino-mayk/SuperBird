@@ -21,3 +21,7 @@ def music_play():
     pygame.mixer.music.load("data/sounds/main_menu_sound.mp3")
     pygame.mixer.music.set_volume(0.03)
     pygame.mixer.music.play(loops=-1)
+
+
+def complete_removal():
+    pass

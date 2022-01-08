@@ -10,12 +10,12 @@ screen = pygame.display.set_mode(size)
 
 # sprites groups
 main_sprites = pygame.sprite.Group()
-menu_background_sprites = pygame.sprite.Group()
+background_sprites = pygame.sprite.Group()
 menu_button_sprites = pygame.sprite.Group()
 player_sprite = pygame.sprite.Group()
 pipe_sprites = pygame.sprite.Group()
-temporary_sprites = pygame.sprite.Group()
 game_button_sprites = pygame.sprite.Group()
+temporary_sprites = pygame.sprite.Group()
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -43,16 +43,16 @@ class Background_sprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(WIDTH_SCREEN, WIDTH_SCREEN + 150)
         self.rect.y = random.randrange(50, HEIGHT_SCREEN - 80)
-        if pygame.sprite.spritecollideany(self, menu_background_sprites):
-            while pygame.sprite.spritecollideany(self, menu_background_sprites):
+        if pygame.sprite.spritecollideany(self, background_sprites):
+            while pygame.sprite.spritecollideany(self, background_sprites):
                 self.rect.x = random.randrange(WIDTH_SCREEN, WIDTH_SCREEN + WIDTH_SCREEN * 0.5)
                 self.rect.y = random.randrange(50, HEIGHT_SCREEN - 80)
-        menu_background_sprites.add(self)
+        background_sprites.add(self)
         pygame.sprite.Sprite.remove(self, group)
 
     def update(self):
         if self.rect.x >= -185 and self.rect.y <= 470:
-            self.rect.x -= SPEED_TILES_MAIN
+            self.rect.x -= SPEED_TILES_BACKGROUND
         else:
             self.kill()
 
@@ -155,7 +155,9 @@ class Top_pipe(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = Top_pipe.image
         self.rect = self.image.get_rect()
-        self.rect.y = -250
+        global coord_top_pipe_sprite
+        coord_top_pipe_sprite = random.randrange(MIN_POS_TOP_PIPE, MAX_POS_TOP_PIPE)
+        self.rect.y = coord_top_pipe_sprite
         self.rect.x = WIDTH_SCREEN
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
@@ -177,7 +179,7 @@ class Bottom_pipe(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = Bottom_pipe.image
         self.rect = self.image.get_rect()
-        self.rect.y = HEIGHT_SCREEN - LEN_PIPES
+        self.rect.y = coord_top_pipe_sprite + LEN_PIPES + GAP
         self.rect.x = WIDTH_SCREEN
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
@@ -200,9 +202,11 @@ class Pause_button(pygame.sprite.Sprite):
         self.image = Pause_button.image
         self.rect = self.image.get_rect()
         self.rect.x = 540
-        self.rect.y = 540
+        self.rect.y = 0
+        global pause_button_pressed
+        pause_button_pressed = False
 
     def update(self, *args):
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
-            print('Pause_button')
+            pause_button_pressed = True
