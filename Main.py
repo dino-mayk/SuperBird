@@ -179,7 +179,7 @@ class Game:
         pipe_sprites.draw(self.screen)
         player_sprite.update()
         player_sprite.draw(self.screen)
-        self.font = pygame.font.SysFont("Orbitron", 50)
+        self.font = pygame.font.SysFont("Arial", 50)
         self.screen.blit(self.font.render(str(self.score), -1, '#c76906'), (500, 10))
         game_button_sprites.draw(self.screen)
 
@@ -219,7 +219,7 @@ class Final:
             pygame.display.set_caption('Main menu')
             self.headline = 'Game over'
             self.points_text = 'points'
-            self.prompt_text1 = 'Press the Space to start a new game'
+            self.prompt_text1 = 'Click on K to start a new game'
             self.prompt_text2 = 'Press Esc to exit to the menu'
         else:
             self.headline = 'Конец игры'
@@ -231,21 +231,21 @@ class Final:
         self.running = True
 
     def loading_data(self):
-        self.coin = load_image('sprites/decoration/game/big_coin.png')
+        self.coin = load_image('sprites/decoration/game/coin1.png')
 
     def rendering(self):
-        intro_text = [(self.headline, 80, 90), (f'+ {score // 5}', 50, 60),
-                      (f'{score} {self.points_text}', 30, 60),
-                      (self.prompt_text1, 60, 23),
-                      (self.prompt_text2, 60, 23)]
-        self.screen.fill((255, 186, 0))
-        self.screen.blit((self.coin), (210, 180))
+        intro_text = [(self.headline, 40, 120), (f'+{score // 5}', 15, 60),
+                      (f'{score} {self.points_text}', 80, 60),
+                      (self.prompt_text1, 15, 45),
+                      (self.prompt_text2, 30, 45)]
+        self.screen.fill(('#e2b606'))
+        self.screen.blit((self.coin), (170, 230))
         text_coord = 50
         for text, coord, fnt in intro_text:
-            font = pygame.font.SysFont("Orbitron", fnt)
+            font = pygame.font.SysFont("Arial", fnt)
             string_rendered = font.render(text, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
-            intro_rect.x = 130
+            intro_rect.x = 50
             intro_rect.top = text_coord
             text_coord += coord
             text_coord += intro_rect.height
@@ -260,11 +260,12 @@ class Final:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     full_cleaning_sprites()
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_k:
                         self.running = False
                         Game().run()
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+                        main_music_play()
                         Main().run()
             pygame.display.update()
 
@@ -276,6 +277,6 @@ if __name__ == "__main__":
     pygame.font.init()
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
-    music_play()
+    main_music_play()
     Main().run()
     pygame.quit()

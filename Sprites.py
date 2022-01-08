@@ -141,15 +141,17 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE]:
             self.rect.y -= JUMP
             self.image = self.frames[self.cur_frame]
+            game_music_play("wing.wav")
         else:
             self.image = self.frames[0]
         if self.rect.y >= HEIGHT_SCREEN or self.rect.y <= -50 \
                 or pygame.sprite.spritecollideany(self, pipe_sprites):
+            game_music_play("die.wav")
             self.kill()
 
 
 class Top_pipe(pygame.sprite.Sprite):
-    image = load_image("sprites/decoration/game/top_pipe.png", color_key=-1)
+    image = load_image("sprites/decoration/game/top_pipe.png")
 
     def __init__(self, group):
         super().__init__(group)
@@ -202,7 +204,7 @@ class Pause_button(pygame.sprite.Sprite):
         self.image = Pause_button.image
         self.rect = self.image.get_rect()
         self.rect.x = 540
-        self.rect.y = 0
+        self.rect.y = 20
         global pause_button_pressed
         pause_button_pressed = False
 
