@@ -11,11 +11,12 @@ SPEED_TILES_BACKGROUND = 2
 # game
 JUMP = 8
 GRAVITY = 3
-COUNT_PIPES = 6
-SPEED_PIPES = 2
+COUNT_PIPES = 3
 LEN_PIPES = 530
-MIN_POS_TOP_PIPE = - 450
-MAX_POS_TOP_PIPE = -50
-# the sprite is long and therefore overseas
-SPACE = 300
+MIN_POS_TOP_PIPE = - 450  # the sprite is long and therefore overseas
+MAX_POS_TOP_PIPE = -50  # the sprite is long and therefore overseas
+SPACE = 350
 GAP = 90
+SPEED_INCREASE_FREQUENCY = 5
+RATE_INCREASE_SPEED_PIPE = 0.2
+TICKET_DROP_CHANCE = 1  # 1 to 20

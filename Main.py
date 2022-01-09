@@ -7,7 +7,6 @@ def full_cleaning_sprites():
     menu_button_sprites.empty()
     player_sprite.empty()
     pipe_sprites.empty()
-    game_button_sprites.empty()
     temporary_sprites.empty()
 
 
@@ -68,7 +67,6 @@ class Main:
 
     def loading_data(self):
         self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
-        self.bird = load_image(f'sprites/birds/{selected_bird}.png', color_key=-1)
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
         self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
         self.sound_on_button = load_image('sprites/decoration/main/sound_on.png', color_key=-1)
@@ -80,6 +78,7 @@ class Main:
         Rating_button(menu_button_sprites)
         Sound_button(menu_button_sprites)
         Roll_up_button(menu_button_sprites)
+        Player(load_image("sprites/birds/blue_bird.png"), 1, 1, 50, 50)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
@@ -87,12 +86,12 @@ class Main:
             Background_sprite(temporary_sprites)
         background_sprites.update()
         background_sprites.draw(self.screen)
-        self.screen.blit(self.bird, (40, 80))
+        player_sprite.draw(self.screen)
         self.screen.blit(self.version, (500, 580))
         self.screen.blit(self.main_text, (120, 20))
+        menu_button_sprites.draw(self.screen)
         self.manager.update(self.time_delta)
         self.manager.draw_ui(self.screen)
-        menu_button_sprites.draw(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
@@ -115,8 +114,8 @@ class Main:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    full_cleaning_sprites()
                     if event.ui_element == self.play_button:
+                        full_cleaning_sprites()
                         self.running = False
                         Game().run()
                     if event.ui_element == self.shop_button:
@@ -152,50 +151,52 @@ class Game:
 
     def processes(self):
         self.running = True
-        self.stop = False
         self.score = -(COUNT_PIPES // 2)
+        self.stop = False
 
     def loading_data(self):
         self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
         self.wallUp = load_image("sprites/decoration/game/bottom_pipe.png")
         self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
-        self.pause_button = load_image('sprites/decoration/game/pause.png', color_key=-1)
 
     def add_sprites(self):
-        Player(load_image("sprites/birds/blue_sheet.png"), 4, 1, 50, 50)
-        Pause_button(game_button_sprites)
+        Player(load_image("sprites/birds/blue_bird.png"), 4, 1, 50, 50)
 
     def rendering(self):
+        # rendering sprites
         self.screen.blit(self.background, (0, 0))
-        if len(background_sprites) < COUNT_TILES_BACKGROUND:
-            Background_sprite(temporary_sprites)
-        background_sprites.update()
         background_sprites.draw(self.screen)
-        if len(pipe_sprites) < COUNT_PIPES:
-            self.score += 1
-            Top_pipe(temporary_sprites)
-            Bottom_pipe(temporary_sprites)
-        pipe_sprites.update()
         pipe_sprites.draw(self.screen)
-        player_sprite.update()
+        ticket_sprites.draw(self.screen)
         player_sprite.draw(self.screen)
         self.font = pygame.font.SysFont("Arial", 50)
         self.screen.blit(self.font.render(str(self.score), -1, '#c76906'), (500, 10))
-        game_button_sprites.draw(self.screen)
-
-    def stop_game(self):
-        pass
+        # updating sprites
+        if self.stop == False:
+            if len(background_sprites) < COUNT_TILES_BACKGROUND:
+                Background_sprite(temporary_sprites)
+            background_sprites.update()
+            if len(pipe_sprites) < COUNT_PIPES:
+                self.score += 1
+                Top_pipe(temporary_sprites)
+                Bottom_pipe(temporary_sprites)
+            pipe_sprites.update()
+            ticket_sprites.update()
+            player_sprite.update()
 
     def run(self):
         self.add_sprites()
         clock = pygame.time.Clock()
         while self.running:
             clock.tick(FPS)
-            if self.stop is True:
-                print(1)
-                continue
             for event in pygame.event.get():
-                game_button_sprites.update(event)
+                key = pygame.key.get_pressed()
+                if key[pygame.K_ESCAPE]:
+                    full_cleaning_sprites()
+                    self.running = False
+                    Main().run()
+                if key[pygame.K_LSHIFT]:
+                    self.stop = not self.stop
             self.rendering()
             if len(player_sprite) == 0:
                 full_cleaning_sprites()
@@ -224,22 +225,22 @@ class Final:
         else:
             self.headline = 'Конец игры'
             self.points_text = 'очков'
-            self.prompt_text1 = 'Нажмите пробел, чтобы начать новую игру'
+            self.prompt_text1 = 'Нажмите K, чтобы начать новую игру'
             self.prompt_text2 = 'Нажмите Esc, чтобы выйти в меню'
 
     def processes(self):
         self.running = True
 
     def loading_data(self):
-        self.coin = load_image('sprites/decoration/game/coin1.png')
+        self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
 
     def rendering(self):
         intro_text = [(self.headline, 40, 120), (f'+{score // 5}', 15, 60),
                       (f'{score} {self.points_text}', 80, 60),
                       (self.prompt_text1, 15, 45),
                       (self.prompt_text2, 30, 45)]
-        self.screen.fill(('#e2b606'))
-        self.screen.blit((self.coin), (170, 230))
+        self.screen.fill('#e2b606')
+        self.screen.blit((self.coin), (140, 235))
         text_coord = 50
         for text, coord, fnt in intro_text:
             font = pygame.font.SysFont("Arial", fnt)

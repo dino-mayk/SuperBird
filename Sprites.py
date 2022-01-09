@@ -14,8 +14,13 @@ background_sprites = pygame.sprite.Group()
 menu_button_sprites = pygame.sprite.Group()
 player_sprite = pygame.sprite.Group()
 pipe_sprites = pygame.sprite.Group()
-game_button_sprites = pygame.sprite.Group()
+ticket_sprites = pygame.sprite.Group()
 temporary_sprites = pygame.sprite.Group()
+
+# additional variables
+speed_pipes = 2
+count_passed_steam_pipes = 0
+count_tickets = 0
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -147,6 +152,10 @@ class Player(pygame.sprite.Sprite):
         if self.rect.y >= HEIGHT_SCREEN or self.rect.y <= -50 \
                 or pygame.sprite.spritecollideany(self, pipe_sprites):
             game_music_play("die.wav")
+            global speed_pipes
+            global count_passed_steam_pipes
+            speed_pipes = 2
+            count_passed_steam_pipes = 0
             self.kill()
 
 
@@ -166,11 +175,23 @@ class Top_pipe(pygame.sprite.Sprite):
                 self.rect.x += SPACE
         pipe_sprites.add(self)
         pygame.sprite.Sprite.remove(self, group)
+        ticket_drop_chance = random.randrange(1, TICKET_DROP_CHANCE + 1)
+        global y_ticket
+        global x_ticket
+        if ticket_drop_chance == TICKET_DROP_CHANCE:
+            y_ticket = coord_top_pipe_sprite + LEN_PIPES
+            x_ticket = self.rect.x
+            Ticket(ticket_sprites)
 
     def update(self):
+        global speed_pipes
         if self.rect.x > -60:
-            self.rect.x -= SPEED_PIPES
+            self.rect.x -= speed_pipes
         else:
+            global count_passed_steam_pipes
+            count_passed_steam_pipes += 1
+            if count_passed_steam_pipes % SPEED_INCREASE_FREQUENCY == 0:
+                speed_pipes += RATE_INCREASE_SPEED_PIPE
             self.kill()
 
 
@@ -191,24 +212,25 @@ class Bottom_pipe(pygame.sprite.Sprite):
 
     def update(self):
         if self.rect.x > -60:
-            self.rect.x -= SPEED_PIPES
+            self.rect.x -= speed_pipes
         else:
             self.kill()
 
 
-class Pause_button(pygame.sprite.Sprite):
-    image = load_image('sprites/decoration/game/pause.png', color_key=-1)
+class Ticket(pygame.sprite.Sprite):
+    image = load_image("sprites/decoration/game/ticket.png", color_key=-1)
 
     def __init__(self, group):
         super().__init__(group)
-        self.image = Pause_button.image
+        self.image = Ticket.image
         self.rect = self.image.get_rect()
-        self.rect.x = 540
-        self.rect.y = 20
-        global pause_button_pressed
-        pause_button_pressed = False
+        self.rect.x = x_ticket
+        self.rect.y = y_ticket
 
-    def update(self, *args):
-        if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
-                self.rect.collidepoint(args[0].pos):
-            pause_button_pressed = True
+    def update(self):
+        self.rect.x -= speed_pipes
+        if pygame.sprite.spritecollideany(self, player_sprite):
+            game_music_play("point.wav")
+            global count_tickets
+            count_tickets += 1
+            self.kill()
