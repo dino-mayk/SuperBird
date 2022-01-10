@@ -7,6 +7,7 @@ def full_cleaning_sprites():
     menu_button_sprites.empty()
     player_sprite.empty()
     pipe_sprites.empty()
+    ticket_sprites.empty()
     temporary_sprites.empty()
 
 
@@ -78,7 +79,7 @@ class Main:
         Rating_button(menu_button_sprites)
         Sound_button(menu_button_sprites)
         Roll_up_button(menu_button_sprites)
-        Player(load_image("sprites/birds/blue_bird.png"), 1, 1, 50, 50)
+        Player(load_image("sprites/birds/blue_bird_glasses.png"), 1, 1, 50, 50)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
@@ -119,7 +120,7 @@ class Main:
                         self.running = False
                         Game().run()
                     if event.ui_element == self.shop_button:
-                        print('Shop pressed')
+                        Shop().run()
                     if event.ui_element == self.settings_button:
                         print('Settings pressed')
                     if event.ui_element == self.about_button:
@@ -160,7 +161,7 @@ class Game:
         self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
 
     def add_sprites(self):
-        Player(load_image("sprites/birds/blue_bird.png"), 4, 1, 50, 50)
+        Player(load_image("sprites/birds/blue_bird_glasses.png"), 4, 1, 50, 50)
 
     def rendering(self):
         # rendering sprites
@@ -269,6 +270,75 @@ class Final:
                         main_music_play()
                         Main().run()
             pygame.display.update()
+
+class Shop:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), "theme.json")
+        self.processes()
+        self.loading_data()
+        self.language_selection()
+        self.InitUI()
+
+    def processes(self):
+        self.running = True
+
+    def loading_data(self):
+        self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
+        self.background = load_image('sprites/decoration/main/backgrounds/clouds/background.png')
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit((self.coin), (10, 15))
+        font = pygame.font.SysFont("Arial", 40)
+        self.screen.blit(font.render('100', -1, "#f0c106"), (70, 20))
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def language_selection(self):
+        if language == 'english':
+            self.text = 'Select'
+        else:
+            self.text = 'Выбрать'
+
+
+    def InitUI(self):
+        self.left_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((50, 440), (90, 50)),
+            text='<',
+            manager=self.manager
+        )
+        self.right_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((460, 440), (90, 50)),
+            text='>',
+            manager=self.manager
+        )
+
+        self.select_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 500), (300, 50)),
+            text=self.text,
+            manager=self.manager
+        )
+
+    def run(self):
+        clock = pygame.time.Clock()
+        pygame.font.init()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            self.rendering()
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        Main().run()
+            pygame.display.update()
+
+
 
 
 if __name__ == "__main__":
