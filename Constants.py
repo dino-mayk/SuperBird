@@ -3,15 +3,17 @@ WIDTH_SCREEN = 600
 HEIGHT_SCREEN = 600
 SIZE_SCREEN = (WIDTH_SCREEN, HEIGHT_SCREEN)
 FPS = 60
+VOLUME_SOUNDS_MENU = 0.01
 
 # background
 COUNT_TILES_BACKGROUND = 3
 SPEED_TILES_BACKGROUND = 2
 
 # game
+PLAYER_COORD_X = 200
 JUMP = 8
 GRAVITY = 3
-COUNT_PIPES = 3
+COUNT_PIPES = 4
 LEN_PIPES = 530
 MIN_POS_TOP_PIPE = - 450  # the sprite is long and therefore overseas
 MAX_POS_TOP_PIPE = -50  # the sprite is long and therefore overseas

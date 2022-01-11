@@ -28,7 +28,3 @@ def game_music_play(name):
     pygame.mixer.music.load(f"data/sounds/{name}")
     pygame.mixer.music.set_volume(0.05)
     pygame.mixer.music.play()
-
-
-def complete_removal():
-    pass

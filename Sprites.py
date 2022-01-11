@@ -21,6 +21,8 @@ temporary_sprites = pygame.sprite.Group()
 speed_pipes = 2
 count_passed_steam_pipes = 0
 count_tickets = 0
+selected_bird = 'classic'
+selected_background = 'clouds'
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -38,9 +40,9 @@ class Cursor(pygame.sprite.Sprite):
 
 
 class Background_sprite(pygame.sprite.Sprite):
-    images = [load_image("sprites/decoration/main/backgrounds/clouds/cloud1.png", color_key=-1),
-              load_image("sprites/decoration/main/backgrounds/clouds/cloud2.png", color_key=-1),
-              load_image("sprites/decoration/main/backgrounds/clouds/cloud3.png", color_key=-1)]
+    images = [load_image(f"sprites/decoration/backgrounds/{selected_background}/1.png", color_key=-1),
+              load_image(f"sprites/decoration/backgrounds/{selected_background}/2.png", color_key=-1),
+              load_image(f"sprites/decoration/backgrounds/{selected_background}/3.png", color_key=-1)]
 
     def __init__(self, group):
         super().__init__(group)
@@ -96,7 +98,7 @@ class Sound_button(pygame.sprite.Sprite):
             self.sound = not self.sound
             if self.sound:
                 self.image = Sound_button.image_on
-                pygame.mixer.music.set_volume(0.03)
+                pygame.mixer.music.set_volume(VOLUME_SOUNDS_MENU)
             else:
                 self.image = Sound_button.image_off
                 pygame.mixer.music.set_volume(0)
@@ -119,17 +121,24 @@ class Roll_up_button(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
+    def __init__(self, sheet, columns, rows, x, y, menu_image=False):
         super().__init__(player_sprite)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-        self.rect.x = 60
-        self.rect.y = HEIGHT_SCREEN * 0.5
+        if menu_image is False:
+            self.image = self.frames[self.cur_frame]
+            self.rect = self.rect.move(x, y)
+            self.rect.x = PLAYER_COORD_X
+            self.rect.y = HEIGHT_SCREEN * 0.5
+        else:
+            self.image = self.frames[0]
+            self.rect = self.rect.move(x, y)
+            self.rect.x = 50
+            self.rect.y = 100
 
     def cut_sheet(self, sheet, columns, rows):
+        # only for Game
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                                 sheet.get_height() // rows)
         for j in range(rows):

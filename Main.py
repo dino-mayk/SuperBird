@@ -1,4 +1,4 @@
-import sys, pygame_gui
+import sys, pygame_gui, sqlite3
 from Sprites import *
 
 
@@ -15,7 +15,7 @@ class Main:
     def __init__(self):
         self.size = self.width, self.height = SIZE_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600), 'theme.json')
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
         self.language_selection()
         self.InitUI()
         self.loading_data()
@@ -67,7 +67,7 @@ class Main:
         )
 
     def loading_data(self):
-        self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
         self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
         self.sound_on_button = load_image('sprites/decoration/main/sound_on.png', color_key=-1)
@@ -79,7 +79,7 @@ class Main:
         Rating_button(menu_button_sprites)
         Sound_button(menu_button_sprites)
         Roll_up_button(menu_button_sprites)
-        Player(load_image("sprites/birds/blue_bird_glasses.png"), 1, 1, 50, 50)
+        Player(load_image("sprites/birds/blue_bird_glasses.png"), 4, 1, 50, 50, menu_image=True)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
@@ -95,6 +95,10 @@ class Main:
         self.manager.draw_ui(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
+
+    def transition(self):
+        full_cleaning_sprites()
+        self.running = False
 
     def show_confirmation_dialog(self):
         confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
@@ -116,10 +120,10 @@ class Main:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.play_button:
-                        full_cleaning_sprites()
-                        self.running = False
+                        self.transition()
                         Game().run()
                     if event.ui_element == self.shop_button:
+                        self.transition()
                         Shop().run()
                     if event.ui_element == self.settings_button:
                         print('Settings pressed')
@@ -128,7 +132,7 @@ class Main:
                     if event.ui_element == self.exit_button:
                         self.show_confirmation_dialog()
                 if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                    self.running = False
+                    self.transition()
                     sys.exit()
                 menu_button_sprites.update(event)
                 self.manager.process_events(event)
@@ -156,7 +160,7 @@ class Game:
         self.stop = False
 
     def loading_data(self):
-        self.background = load_image(f'sprites/decoration/main/backgrounds/clouds/background.png')
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
         self.wallUp = load_image("sprites/decoration/game/bottom_pipe.png")
         self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
 
@@ -271,25 +275,76 @@ class Final:
                         Main().run()
             pygame.display.update()
 
+
 class Shop:
     def __init__(self):
         self.size = self.width, self.height = SIZE_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600), "theme.json")
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
         self.processes()
         self.loading_data()
+        self.loading_database()
         self.language_selection()
         self.InitUI()
 
+    def language_selection(self):
+        if language == 'english':
+            self.select_button_text = 'Select'
+        else:
+            self.select_button_text = 'Выбрать'
+
     def processes(self):
         self.running = True
+        self.select_background = 1
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
+
+    def InitUI(self):
+        self.player_left_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((50, 300), (90, 50)),
+            text='<',
+            manager=self.manager
+        )
+        self.player_right_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((460, 300), (90, 50)),
+            text='>',
+            manager=self.manager
+        )
+        self.player_select_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 300), (300, 50)),
+            text=self.select_button_text,
+            manager=self.manager
+        )
+        self.background_left_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((50, 500), (90, 50)),
+            text='<',
+            manager=self.manager
+        )
+        self.background_right_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((460, 500), (90, 50)),
+            text='>',
+            manager=self.manager
+        )
+        self.background_select_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 500), (300, 50)),
+            text=self.select_button_text,
+            manager=self.manager
+        )
 
     def loading_data(self):
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
-        self.background = load_image('sprites/decoration/main/backgrounds/clouds/background.png')
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
+
+    def loading_database(self):
+        backgrounds = self.cur.execute("""SELECT * FROM Backgrounds""").fetchall()
+        print(backgrounds)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
+        if len(background_sprites) < COUNT_TILES_BACKGROUND:
+            Background_sprite(temporary_sprites)
+        background_sprites.update()
+        background_sprites.draw(self.screen)
         self.screen.blit((self.coin), (10, 15))
         font = pygame.font.SysFont("Arial", 40)
         self.screen.blit(font.render('100', -1, "#f0c106"), (70, 20))
@@ -298,53 +353,32 @@ class Shop:
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
-    def language_selection(self):
-        if language == 'english':
-            self.text = 'Select'
-        else:
-            self.text = 'Выбрать'
-
-
-    def InitUI(self):
-        self.left_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((50, 440), (90, 50)),
-            text='<',
-            manager=self.manager
-        )
-        self.right_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((460, 440), (90, 50)),
-            text='>',
-            manager=self.manager
-        )
-
-        self.select_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((150, 500), (300, 50)),
-            text=self.text,
-            manager=self.manager
-        )
-
     def run(self):
         clock = pygame.time.Clock()
         pygame.font.init()
         while self.running:
             self.time_delta = clock.tick(FPS)
-            self.rendering()
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.background_left_button:
+                        print(1)
+                    if event.ui_element == self.background_right_button:
+                        print(2)
+                    if event.ui_element == self.background_select_button:
+                        print(3)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
                         Main().run()
+                self.manager.process_events(event)
+            self.rendering()
             pygame.display.update()
-
-
 
 
 if __name__ == "__main__":
     language = "english"
-    selected_bird = 'classic'
-    selected_background = ''
     pygame.font.init()
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
