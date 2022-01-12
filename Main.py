@@ -11,6 +11,252 @@ def full_cleaning_sprites():
     temporary_sprites.empty()
 
 
+class Entrance:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
+        self.language_selection()
+        self.InitUI()
+        self.loading_data()
+        self.running = True
+
+    def language_selection(self):
+        if language == 'english':
+            self.login = 'To come in'
+            self.registration = 'Register'
+            self.text_exit = 'Exit'
+            self.question = 'Are you sure you want to log out?'
+        else:
+            self.login = 'Войти'
+            self.registration = 'Зарегистрироваться'
+            self.text_exit = 'Выйти'
+            self.question = 'Вы уверены, что хотите выйти?'
+
+    def InitUI(self):
+        self.login_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 230), (300, 60)),
+            text=self.login,
+            manager=self.manager,
+        )
+        self.registration_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 310), (300, 60)),
+            text=self.registration,
+            manager=self.manager
+        )
+        self.exit_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 390), (300, 60)),
+            text=self.text_exit,
+            manager=self.manager
+        )
+
+    def show_confirmation_dialog(self):
+        confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
+            rect=pygame.Rect((100, 150), (300, 200)),
+            manager=self.manager,
+            window_title='Exit',
+            action_long_desc=self.question,
+            action_short_name='Yes',
+            blocking=True
+        )
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
+        self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
+        self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.version, (500, 580))
+        self.screen.blit(self.main_text, (120, 20))
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def transition(self):
+        self.running = False
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.login_button:
+                        Login().run()
+                    if event.ui_element == self.registration_button:
+                        Registration().run()
+                    if event.ui_element == self.exit_button:
+                        self.show_confirmation_dialog()
+                if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
+                    self.transition()
+                    sys.exit()
+                self.manager.process_events(event)
+            self.rendering()
+            pygame.display.update()
+
+
+class Login:
+    def __init__(self):
+        self.size = self.width, self.height = LOGIN_AND_REGISTRATION_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
+        self.language_selection()
+        self.InitUI()
+        self.loading_data()
+        self.running = True
+
+    def language_selection(self):
+        if language == 'english':
+            self.login = 'To come in'
+            self.text_password = 'Password:'
+            self.text_nickname = 'Nickname:'
+        else:
+            self.login = 'Войти'
+            self.text_password = 'Пароль:'
+            self.text_nickname = 'Прозвище:'
+
+    def InitUI(self):
+        self.login_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((15, 180), (350, 60)),
+            text=self.login,
+            manager=self.manager,
+        )
+        self.password_line = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((170, 100), (300, 30)),
+            manager=self.manager
+        )
+        self.nickname_line = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((170, 50), (300, 30)),
+            manager=self.manager
+        )
+        self.password_lable = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, 100), (150, 30)),
+            text=self.text_password,
+            manager=self.manager
+        )
+        self.nickname_lable = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, 50), (150, 30)),
+            text=self.text_nickname,
+            manager=self.manager
+        )
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def transition(self):
+        self.running = False
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.login_button:
+                        print('hahaha')
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        Entrance().run()
+                self.manager.process_events(event)
+            self.rendering()
+            pygame.display.update()
+
+
+class Registration:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
+        self.language_selection()
+        self.InitUI()
+        self.loading_data()
+        self.running = True
+
+    def language_selection(self):
+        if language == 'english':
+            self.login = 'Register'
+            self.text_password = 'Password:'
+            self.text_nickname = 'Nickname:'
+        else:
+            self.login = 'Зарегистрироваться'
+            self.text_password = 'Пароль:'
+            self.text_nickname = 'Прозвище:'
+
+    def InitUI(self):
+        self.login_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((150, 500), (300, 60)),
+            text=self.login,
+            manager=self.manager,
+        )
+        self.password_line = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((160, 250), (250, 30)),
+            manager=self.manager
+        )
+        self.nickname_line = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((160, 300), (250, 30)),
+            manager=self.manager
+        )
+        self.password_lable = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, 300), (150, 30)),
+            text=self.text_password,
+            manager=self.manager
+        )
+        self.nickname_lable = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, 250), (150, 30)),
+            text=self.text_nickname,
+            manager=self.manager
+        )
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
+        self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
+        self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.version, (500, 580))
+        self.screen.blit(self.main_text, (120, 20))
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def transition(self):
+        self.running = False
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.login_button:
+                        print('hahaha')
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        Entrance().run()
+                self.manager.process_events(event)
+            self.rendering()
+            pygame.display.update()
+
+
 class Main:
     def __init__(self):
         self.size = self.width, self.height = SIZE_SCREEN
@@ -383,5 +629,5 @@ if __name__ == "__main__":
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
     main_music_play()
-    Main().run()
+    Entrance().run()
     pygame.quit()
