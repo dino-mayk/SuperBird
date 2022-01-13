@@ -1,4 +1,6 @@
 import sys, pygame_gui, sqlite3
+
+import Sprites
 from Sprites import *
 
 
@@ -13,40 +15,35 @@ def full_cleaning_sprites():
 
 class Entrance:
     def __init__(self):
-        self.size = self.width, self.height = SIZE_SCREEN
+        self.size = self.width, self.height = (400, 400)
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.processes()
         self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
-        self.language_selection()
         self.InitUI()
         self.loading_data()
-        self.running = True
 
-    def language_selection(self):
-        if language == 'english':
-            self.login = 'To come in'
-            self.registration = 'Register'
-            self.text_exit = 'Exit'
-            self.question = 'Are you sure you want to log out?'
-        else:
-            self.login = 'Войти'
-            self.registration = 'Зарегистрироваться'
-            self.text_exit = 'Выйти'
-            self.question = 'Вы уверены, что хотите выйти?'
+    def processes(self):
+        self.running = True
 
     def InitUI(self):
         self.login_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((150, 230), (300, 60)),
-            text=self.login,
+            relative_rect=pygame.Rect((50, 100), (300, 60)),
+            text='Login',
             manager=self.manager,
         )
         self.registration_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((150, 310), (300, 60)),
-            text=self.registration,
+            relative_rect=pygame.Rect((50, 170), (300, 60)),
+            text='Registration',
+            manager=self.manager
+        )
+        self.account_creation_help_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((50, 240), (300, 60)),
+            text='Account creation help',
             manager=self.manager
         )
         self.exit_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((150, 390), (300, 60)),
-            text=self.text_exit,
+            relative_rect=pygame.Rect((50, 310), (300, 60)),
+            text='Exit',
             manager=self.manager
         )
 
@@ -55,7 +52,7 @@ class Entrance:
             rect=pygame.Rect((100, 150), (300, 200)),
             manager=self.manager,
             window_title='Exit',
-            action_long_desc=self.question,
+            action_long_desc='Are you sure you want to log out?',
             action_short_name='Yes',
             blocking=True
         )
@@ -63,18 +60,20 @@ class Entrance:
     def loading_data(self):
         self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
-        self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
-        self.screen.blit(self.version, (500, 580))
-        self.screen.blit(self.main_text, (120, 20))
+        self.screen.blit(self.main_text, (20, -20))
+        version_font = pygame.font.SysFont('Segoe Print', 10)
+        version_text = version_font.render("Version 1.0", True, (255, 255, 255))
+        self.screen.blit(version_text, (335, 380))
         self.manager.update(self.time_delta)
         self.manager.draw_ui(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
     def transition(self):
+        full_cleaning_sprites()
         self.running = False
 
     def run(self):
@@ -103,44 +102,32 @@ class Login:
     def __init__(self):
         self.size = self.width, self.height = LOGIN_AND_REGISTRATION_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
-        self.language_selection()
+        self.manager = pygame_gui.UIManager(LOGIN_AND_REGISTRATION_SCREEN, 'data/sprites/decoration/theme.json')
+        self.processes()
+        self.loading_database()
         self.InitUI()
         self.loading_data()
-        self.running = True
 
-    def language_selection(self):
-        if language == 'english':
-            self.login = 'To come in'
-            self.text_password = 'Password:'
-            self.text_nickname = 'Nickname:'
-        else:
-            self.login = 'Войти'
-            self.text_password = 'Пароль:'
-            self.text_nickname = 'Прозвище:'
+    def processes(self):
+        self.running = True
+        self.error_message = False
+
+    def loading_database(self):
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
 
     def InitUI(self):
         self.login_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((15, 180), (350, 60)),
-            text=self.login,
+            relative_rect=pygame.Rect((15, 100), (350, 60)),
+            text='Login',
             manager=self.manager,
         )
-        self.password_line = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((170, 100), (300, 30)),
+        self.password_label = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((100, 50), (250, 30)),
             manager=self.manager
         )
-        self.nickname_line = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((170, 50), (300, 30)),
-            manager=self.manager
-        )
-        self.password_lable = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, 100), (150, 30)),
-            text=self.text_password,
-            manager=self.manager
-        )
-        self.nickname_lable = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, 50), (150, 30)),
-            text=self.text_nickname,
+        self.login_label = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((100, 10), (250, 30)),
             manager=self.manager
         )
 
@@ -149,13 +136,37 @@ class Login:
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
+        login_font = pygame.font.SysFont('Segoe Print', 13)
+        login_text = login_font.render("login:", True, (255, 255, 255))
+        self.screen.blit(login_text, (20, 10))
+        password_font = pygame.font.SysFont('Segoe Print', 13)
+        password_text = password_font.render("password:", True, (255, 255, 255))
+        self.screen.blit(password_text, (20, 50))
+        if self.error_message == True:
+            error_message_font = pygame.font.SysFont('Segoe Print', 15)
+            error_message_text = error_message_font.render("You entered incorrect data", True, (255, 0, 0))
+            self.screen.blit(error_message_text, (90, 160))
         self.manager.update(self.time_delta)
         self.manager.draw_ui(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
     def transition(self):
+        full_cleaning_sprites()
         self.running = False
+
+    def database_search(self):
+        projected_data = self.cur.execute(f"""SELECT * FROM Users""").fetchall()
+        self.con.close()
+        input_login = self.login_label.text
+        input_password = self.password_label.text
+        for user_id, user_login, user_password, gold, record, selected_skin, \
+            selected_background, language, sound in projected_data:
+            if input_login == input_login and user_password == input_password:
+                user = user_id
+                self.transition()
+                Main().run()
+        self.error_message = True
 
     def run(self):
         clock = pygame.time.Clock()
@@ -165,11 +176,10 @@ class Login:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == self.login_button:
-                        print('hahaha')
+                    self.database_search()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.running = False
+                        self.transition()
                         Entrance().run()
                 self.manager.process_events(event)
             self.rendering()
@@ -178,65 +188,80 @@ class Login:
 
 class Registration:
     def __init__(self):
-        self.size = self.width, self.height = SIZE_SCREEN
+        self.size = self.width, self.height = LOGIN_AND_REGISTRATION_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
-        self.language_selection()
+        self.processes()
+        self.loading_database()
+        self.manager = pygame_gui.UIManager(LOGIN_AND_REGISTRATION_SCREEN, 'data/sprites/decoration/theme.json')
         self.InitUI()
         self.loading_data()
-        self.running = True
 
-    def language_selection(self):
-        if language == 'english':
-            self.login = 'Register'
-            self.text_password = 'Password:'
-            self.text_nickname = 'Nickname:'
-        else:
-            self.login = 'Зарегистрироваться'
-            self.text_password = 'Пароль:'
-            self.text_nickname = 'Прозвище:'
+    def processes(self):
+        self.running = True
+        self.error_message = False
+
+    def loading_database(self):
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
 
     def InitUI(self):
-        self.login_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((150, 500), (300, 60)),
-            text=self.login,
-            manager=self.manager,
+        self.login_line = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((100, 10), (250, 30)),
+            manager=self.manager
         )
         self.password_line = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((160, 250), (250, 30)),
+            relative_rect=pygame.Rect((100, 50), (250, 30)),
             manager=self.manager
         )
-        self.nickname_line = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((160, 300), (250, 30)),
-            manager=self.manager
-        )
-        self.password_lable = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, 300), (150, 30)),
-            text=self.text_password,
-            manager=self.manager
-        )
-        self.nickname_lable = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, 250), (150, 30)),
-            text=self.text_nickname,
-            manager=self.manager
+        self.register_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((15, 100), (350, 60)),
+            text='Register',
+            manager=self.manager,
         )
 
     def loading_data(self):
         self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
-        self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
-        self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
+
+    def transition(self):
+        full_cleaning_sprites()
+        self.running = False
+
+    def add_database(self):
+        try:
+            # addition variables
+            input_login = self.login_line.text
+            input_password = self.password_line.text
+            # check
+            if login_check(input_login) is False or password_check(input_password) is False:
+                self.error_message = True
+            else:
+                # addition to the database
+                self.cur.execute("""INSERT INTO Users(login, password, gold, record, selected_skin, 
+                        selected_background, language, sound) 
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?)""", (input_login, input_password, 0, 0, 1, 1, 'english', 'on'))
+                self.con.commit()
+                self.con.close()
+                self.transition()
+                Login().run()
+        except sqlite3.IntegrityError:
+            self.error_message = True
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
-        self.screen.blit(self.version, (500, 580))
-        self.screen.blit(self.main_text, (120, 20))
+        font = pygame.font.SysFont('Segoe Print', 13)
+        login_text = font.render("login:", True, (255, 255, 255))
+        password_text = font.render("password:", True, (255, 255, 255))
+        self.screen.blit(login_text, (20, 10))
+        self.screen.blit(password_text, (20, 50))
+        if self.error_message == True:
+            error_message_font = pygame.font.SysFont('Segoe Print', 15)
+            error_message_text = error_message_font.render("The data is incorrect or such "
+                                                           "a login already exists", True, (255, 0, 0))
+            self.screen.blit(error_message_text, (10, 160))
         self.manager.update(self.time_delta)
         self.manager.draw_ui(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
-
-    def transition(self):
-        self.running = False
 
     def run(self):
         clock = pygame.time.Clock()
@@ -246,11 +271,10 @@ class Registration:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == self.login_button:
-                        print('hahaha')
+                    self.add_database()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.running = False
+                        self.transition()
                         Entrance().run()
                 self.manager.process_events(event)
             self.rendering()
@@ -315,7 +339,6 @@ class Main:
     def loading_data(self):
         self.background = load_image(f'sprites/decoration/backgrounds/{selected_background}/background.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
-        self.version = load_image('sprites/decoration/main/version.png', color_key=-1)
         self.sound_on_button = load_image('sprites/decoration/main/sound_on.png', color_key=-1)
         self.sound_off_button = load_image('sprites/decoration/main/sound_off.png', color_key=-1)
         self.rating_button = load_image('sprites/decoration/main/rating.png', color_key=-1)
@@ -334,7 +357,9 @@ class Main:
         background_sprites.update()
         background_sprites.draw(self.screen)
         player_sprite.draw(self.screen)
-        self.screen.blit(self.version, (500, 580))
+        version_font = pygame.font.SysFont('Segoe Print', 10)
+        version_text = version_font.render("Version 1.0", True, (255, 255, 255))
+        self.screen.blit(version_text, (530, 580))
         self.screen.blit(self.main_text, (120, 20))
         menu_button_sprites.draw(self.screen)
         self.manager.update(self.time_delta)
@@ -402,7 +427,6 @@ class Game:
 
     def processes(self):
         self.running = True
-        self.score = -(COUNT_PIPES // 2)
         self.stop = False
 
     def loading_data(self):
@@ -421,19 +445,22 @@ class Game:
         ticket_sprites.draw(self.screen)
         player_sprite.draw(self.screen)
         self.font = pygame.font.SysFont("Arial", 50)
-        self.screen.blit(self.font.render(str(self.score), -1, '#c76906'), (500, 10))
+        self.screen.blit(self.font.render(str(Sprites.score), -1, '#c76906'), (HEIGHT_SCREEN * 0.5, 10))
         # updating sprites
         if self.stop == False:
             if len(background_sprites) < COUNT_TILES_BACKGROUND:
                 Background_sprite(temporary_sprites)
             background_sprites.update()
             if len(pipe_sprites) < COUNT_PIPES:
-                self.score += 1
                 Top_pipe(temporary_sprites)
                 Bottom_pipe(temporary_sprites)
             pipe_sprites.update()
             ticket_sprites.update()
             player_sprite.update()
+
+    def transition(self):
+        full_cleaning_sprites()
+        self.running = False
 
     def run(self):
         self.add_sprites()
@@ -450,10 +477,7 @@ class Game:
                     self.stop = not self.stop
             self.rendering()
             if len(player_sprite) == 0:
-                full_cleaning_sprites()
-                global score
-                score = self.score
-                self.running = False
+                self.transition()
                 Final().run()
             pygame.display.update()
 
@@ -486,11 +510,11 @@ class Final:
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
 
     def rendering(self):
-        intro_text = [(self.headline, 40, 120), (f'+{score // 5}', 15, 60),
-                      (f'{score} {self.points_text}', 80, 60),
+        self.screen.fill('#e2b606')
+        intro_text = [(self.headline, 40, 120), (f'+ {Sprites.score // COIN_POINT_RATIO}', 15, 60),
+                      (f'+ {Sprites.score} {self.points_text}', 80, 60),
                       (self.prompt_text1, 15, 45),
                       (self.prompt_text2, 30, 45)]
-        self.screen.fill('#e2b606')
         self.screen.blit((self.coin), (140, 235))
         text_coord = 50
         for text, coord, fnt in intro_text:
@@ -503,6 +527,10 @@ class Final:
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
 
+    def transition(self):
+        full_cleaning_sprites()
+        self.running = False
+
     def run(self):
         clock = pygame.time.Clock()
         pygame.font.init()
@@ -513,11 +541,11 @@ class Final:
                 if event.type == pygame.KEYDOWN:
                     full_cleaning_sprites()
                     if event.key == pygame.K_k:
-                        self.running = False
+                        Sprites.score = 0
+                        self.transition()
                         Game().run()
                     if event.key == pygame.K_ESCAPE:
-                        self.running = False
-                        main_music_play()
+                        self.transition()
                         Main().run()
             pygame.display.update()
 
@@ -583,7 +611,6 @@ class Shop:
 
     def loading_database(self):
         backgrounds = self.cur.execute("""SELECT * FROM Backgrounds""").fetchall()
-        print(backgrounds)
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
@@ -598,6 +625,10 @@ class Shop:
         self.manager.draw_ui(self.screen)
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
+
+    def transition(self):
+        full_cleaning_sprites()
+        self.running = False
 
     def run(self):
         clock = pygame.time.Clock()
@@ -616,7 +647,7 @@ class Shop:
                         print(3)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.running = False
+                        self.transition()
                         Main().run()
                 self.manager.process_events(event)
             self.rendering()
@@ -625,9 +656,9 @@ class Shop:
 
 if __name__ == "__main__":
     language = "english"
+    user = 0
     pygame.font.init()
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
-    main_music_play()
-    Entrance().run()
+    Game().run()
     pygame.quit()

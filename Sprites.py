@@ -19,10 +19,15 @@ temporary_sprites = pygame.sprite.Group()
 
 # additional variables
 speed_pipes = 2
-count_passed_steam_pipes = 0
 count_tickets = 0
 selected_bird = 'classic'
 selected_background = 'clouds'
+score = 0
+
+# sound
+pygame.mixer.set_num_channels(2)
+pygame.mixer.Channel(0).play(pygame.mixer.Sound('data/sounds/main_menu_sound.mp3'), loops=-1)
+pygame.mixer.Channel(0).set_volume(0.01)
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -173,9 +178,11 @@ class Top_pipe(pygame.sprite.Sprite):
 
     def __init__(self, group):
         super().__init__(group)
+        global coord_top_pipe_sprite
+        global y_ticket
+        global x_ticket
         self.image = Top_pipe.image
         self.rect = self.image.get_rect()
-        global coord_top_pipe_sprite
         coord_top_pipe_sprite = random.randrange(MIN_POS_TOP_PIPE, MAX_POS_TOP_PIPE)
         self.rect.y = coord_top_pipe_sprite
         self.rect.x = WIDTH_SCREEN
@@ -185,8 +192,6 @@ class Top_pipe(pygame.sprite.Sprite):
         pipe_sprites.add(self)
         pygame.sprite.Sprite.remove(self, group)
         ticket_drop_chance = random.randrange(1, TICKET_DROP_CHANCE + 1)
-        global y_ticket
-        global x_ticket
         if ticket_drop_chance == TICKET_DROP_CHANCE:
             y_ticket = coord_top_pipe_sprite + LEN_PIPES
             x_ticket = self.rect.x
@@ -194,12 +199,14 @@ class Top_pipe(pygame.sprite.Sprite):
 
     def update(self):
         global speed_pipes
+        global count_passed_steam_pipes
+        global score
+        if self.rect.x == PLAYER_COORD_X:
+            score += 1
         if self.rect.x > -60:
             self.rect.x -= speed_pipes
         else:
-            global count_passed_steam_pipes
-            count_passed_steam_pipes += 1
-            if count_passed_steam_pipes % SPEED_INCREASE_FREQUENCY == 0:
+            if score % SPEED_INCREASE_FREQUENCY == 0:
                 speed_pipes += RATE_INCREASE_SPEED_PIPE
             self.kill()
 
@@ -239,7 +246,8 @@ class Ticket(pygame.sprite.Sprite):
     def update(self):
         self.rect.x -= speed_pipes
         if pygame.sprite.spritecollideany(self, player_sprite):
-            game_music_play("point.wav")
+            pygame.mixer.Channel(1).play(pygame.mixer.Sound('data/sounds/point.wav'))
+            pygame.mixer.Channel(1).set_volume(0.1)
             global count_tickets
             count_tickets += 1
             self.kill()
