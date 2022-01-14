@@ -1,18 +1,29 @@
 {
-     "button":
+     "button": {
+		 "colours": {
+			 "normal_bg": "#f0c106",
+			 "hovered_bg": "#e2b606",
+			 "normal_text": "#000000",
+			 "hovered_text": "#000000",
+			 "normal_border": "#c76906",
+			 "hovered_border": "#c76906"
+		 },
+		 "misc": {
+			 "border_width": "3"
+		 }
+	 },
+     "text_entry_line":
      {
          "colours":
-         	{
-           	"normal_bg":"#f0c106",
-           	"hovered_bg":"#e2b606",
-           	"normal_text":"#000000",
-           	"hovered_text":"#000000",
-           	"normal_border": "#c76906",
-           	"hovered_border": "#c76906"
-             },
-	 "misc":
-		{
-          "border_width": "3"
-         }
+         {
+             "dark_bg": "#f0c106",
+             "selected_bg": "#55595e",
+             "normal_text": "#000000",
+             "selected_text": "#FFFFFF",
+             "normal_border": "#c76906"
+         },
+		 "misc": {
+			 "border_width": "3"
+		 }
      }
-}
+ }

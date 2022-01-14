@@ -88,6 +88,8 @@ class Entrance:
                         Login().run()
                     if event.ui_element == self.registration_button:
                         Registration().run()
+                    if event.ui_element == self.account_creation_help_button:
+                        Reference().run()
                     if event.ui_element == self.exit_button:
                         self.show_confirmation_dialog()
                 if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
@@ -281,6 +283,63 @@ class Registration:
             pygame.display.update()
 
 
+class Reference:
+    def __init__(self):
+        self.size = self.width, self.height = LOGIN_AND_REGISTRATION_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.language_selection()
+        self.processes()
+
+    def language_selection(self):
+        if language == 'english':
+            self.line1 = 'Dear user, your login must be between 5 and 20'
+            self.line2 = 'characters long and original ;)'
+            self.line3 = 'And if there are problems with the password,'
+            self.line4 = 'then come up with it in size from 8 to 20 characters.'
+        else:
+            self.line1 = 'Дорогой пользователь, ваш логин должен'
+            self.line2 = 'быть от 5 до 20 символов и оригинальным ;)'
+            self.line3 = 'А если проблемы с паролем, то придумайте'
+            self.line4 = 'его размером от 8 до 20 символов.'
+
+    def processes(self):
+        self.running = True
+
+    def rendering(self):
+        self.screen.fill('#e2b606')
+        intro_text = [(f'{self.line1}', 10, 20),
+                      (f'{self.line2}', 20, 20),
+                      (f'{self.line3}', 10, 20),
+                      (f'{self.line4}', 20, 20)]
+        text_coord = 30
+        for text, coord, fnt in intro_text:
+            font = pygame.font.SysFont("Arial", fnt)
+            string_rendered = font.render(text, 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            intro_rect.x = 10
+            intro_rect.top = text_coord
+            text_coord += coord
+            text_coord += intro_rect.height
+            print(Sprites.count_tickets)
+            screen.blit(string_rendered, intro_rect)
+
+    def transition(self):
+        self.running = False
+
+    def run(self):
+        clock = pygame.time.Clock()
+        pygame.font.init()
+        while self.running:
+            clock.tick(FPS)
+            self.rendering()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.transition()
+                        Entrance().run()
+            pygame.display.update()
+
+
 class Main:
     def __init__(self):
         self.size = self.width, self.height = SIZE_SCREEN
@@ -399,7 +458,7 @@ class Main:
                     if event.ui_element == self.settings_button:
                         print('Settings pressed')
                     if event.ui_element == self.about_button:
-                        print('About pressed')
+                        About().run()
                     if event.ui_element == self.exit_button:
                         self.show_confirmation_dialog()
                 if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
@@ -508,15 +567,18 @@ class Final:
 
     def loading_data(self):
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
+        self.ticket = load_image('sprites/decoration/game/ticket.png')
 
     def rendering(self):
         self.screen.fill('#e2b606')
-        intro_text = [(self.headline, 40, 120), (f'+ {Sprites.score // COIN_POINT_RATIO}', 15, 60),
-                      (f'+ {Sprites.score} {self.points_text}', 80, 60),
+        intro_text = [(self.headline, 20, 120), (f'+ {Sprites.score // COIN_POINT_RATIO}', 10, 60),
+                      (f'+ {Sprites.score} {self.points_text}', 10, 60),
+                      (f'+ {Sprites.count_tickets}', 40, 60),
                       (self.prompt_text1, 15, 45),
                       (self.prompt_text2, 30, 45)]
-        self.screen.blit((self.coin), (140, 235))
-        text_coord = 50
+        self.screen.blit((self.coin), (140, 195))
+        self.screen.blit((self.ticket), (180, 350))
+        text_coord = 30
         for text, coord, fnt in intro_text:
             font = pygame.font.SysFont("Arial", fnt)
             string_rendered = font.render(text, 1, pygame.Color('black'))
@@ -525,6 +587,7 @@ class Final:
             intro_rect.top = text_coord
             text_coord += coord
             text_coord += intro_rect.height
+            print(Sprites.count_tickets)
             screen.blit(string_rendered, intro_rect)
 
     def transition(self):
@@ -654,11 +717,77 @@ class Shop:
             pygame.display.update()
 
 
+class About:
+    def __init__(self):
+        self.size = self.width, self.height = WIDTH_SCREEN, HEIGHT_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.language_selection()
+        self.processes()
+
+    def language_selection(self):
+        if language == 'english':
+            self.line1 = 'The game consists in the fact that you need to control the bird with'
+            self.line2 = 'the space bar. It should fly between the pipes.'
+            self.line3 = 'Shift - stop or continue the game'
+            self.line4 = 'Esc - log off play or shop or settings or about'
+            self.line5 = 'collect everything              to try your luck'
+            self.line6 = 'earn points and get        for them'
+            self.line7 = 'Course 5 to 1'
+        else:
+            self.line1 = 'Игра заключается в том, что надо с помощью пробела управлять'
+            self.line2 = 'птичкой. Она должна пролетать между труб.'
+            self.line3 = 'Shift - остановить или продолжить игру'
+            self.line4 = 'Esc - выйти из игры или магазина или настроек или об игре'
+            self.line5 = 'Собирай все       и испытай свою удачу'
+            self.line6 = 'Зарабатывай баллы и меняй их на монетки'
+            self.line7 = 'Курс 5 к 1'
+
+    def processes(self):
+        self.running = True
+
+    def rendering(self):
+        self.screen.fill('#e2b606')
+        intro_text = [(f'{self.line1}', 10, 30),
+                      (f'{self.line2}', 20, 30),
+                      (f'{self.line3}', 10, 30),
+                      (f'{self.line4}', 20, 30),
+                      (f'{self.line5}', 20, 30),
+                      (f'{self.line6}', 20, 30),
+                      (f'{self.line7}', 20, 30)]
+        text_coord = 30
+        for text, coord, fnt in intro_text:
+            font = pygame.font.SysFont("Arial", fnt)
+            string_rendered = font.render(text, 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            intro_rect.x = 10
+            intro_rect.top = text_coord
+            text_coord += coord
+            text_coord += intro_rect.height
+            print(Sprites.count_tickets)
+            screen.blit(string_rendered, intro_rect)
+
+    def transition(self):
+        self.running = False
+
+    def run(self):
+        clock = pygame.time.Clock()
+        pygame.font.init()
+        while self.running:
+            clock.tick(FPS)
+            self.rendering()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.transition()
+                        Main().run()
+            pygame.display.update()
+
+
 if __name__ == "__main__":
     language = "english"
     user = 0
     pygame.font.init()
     Cursor(main_sprites)
     pygame.display.set_icon(pygame.image.load("data/sprites/decoration/icon.png"))
-    Game().run()
+    Entrance().run()
     pygame.quit()

@@ -106,7 +106,7 @@ class Sound_button(pygame.sprite.Sprite):
                 pygame.mixer.music.set_volume(VOLUME_SOUNDS_MENU)
             else:
                 self.image = Sound_button.image_off
-                pygame.mixer.music.set_volume(0)
+                pygame.mixer.Channel(0).set_volume(0)
 
 
 class Roll_up_button(pygame.sprite.Sprite):
