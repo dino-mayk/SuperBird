@@ -1,3 +1,4 @@
+import sqlite3
 import pygame, os
 
 
@@ -24,12 +25,21 @@ def game_music_play(name):
 
 
 def login_check(login):
-    if len(login) < 3 or len(login) > 20:
+    if len(login) < 5 or len(login) > 20:
         return False
     return True
 
 
 def password_check(password):
-    if len(password) < 5 or len(password) > 20:
+    if len(password) < 8 or len(password) > 20:
         return False
     return True
+
+
+def update_gold(user_id, gold_count):
+    con = sqlite3.connect('data/Database.db')
+    cur = con.cursor()
+    cur.execute(f"""UPDATE Users SET gold = (SELECT gold FROM Users WHERE 
+        id = {user_id}) + {gold_count} WHERE id = {user_id}""")
+    con.commit()
+    con.close()

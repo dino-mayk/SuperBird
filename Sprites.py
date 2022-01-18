@@ -25,9 +25,11 @@ selected_background = 'clouds'
 score = 0
 
 # sound
+sound = 1
 pygame.mixer.set_num_channels(2)
 pygame.mixer.Channel(0).play(pygame.mixer.Sound('data/sounds/main_menu_sound.mp3'), loops=-1)
-pygame.mixer.Channel(0).set_volume(0.01)
+pygame.mixer.Channel(0).set_volume(VOLUME_SOUNDS_MENU)
+pygame.mixer.Channel(1).set_volume(0.1)
 
 
 class Cursor(pygame.sprite.Sprite):
@@ -45,9 +47,9 @@ class Cursor(pygame.sprite.Sprite):
 
 
 class Background_sprite(pygame.sprite.Sprite):
-    images = [load_image(f"sprites/decoration/backgrounds/{selected_background}/1.png", color_key=-1),
-              load_image(f"sprites/decoration/backgrounds/{selected_background}/2.png", color_key=-1),
-              load_image(f"sprites/decoration/backgrounds/{selected_background}/3.png", color_key=-1)]
+    images = [load_image(f"sprites/backgrounds/{selected_background}/1.png", color_key=-1),
+              load_image(f"sprites/backgrounds/{selected_background}/2.png", color_key=-1),
+              load_image(f"sprites/backgrounds/{selected_background}/3.png", color_key=-1)]
 
     def __init__(self, group):
         super().__init__(group)
@@ -91,22 +93,30 @@ class Sound_button(pygame.sprite.Sprite):
 
     def __init__(self, group):
         super().__init__(group)
-        self.sound = True
-        self.image = Sound_button.image_on
+        if sound == 1:
+            self.image = Sound_button.image_on
+        else:
+            self.image = Sound_button.image_off
         self.rect = self.image.get_rect()
         self.rect.x = 35
         self.rect.y = 550
 
     def update(self, *args):
+        global sound
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
-            self.sound = not self.sound
-            if self.sound:
+            if sound == 1:
+                sound = 0
+            else:
+                sound = 1
+            if sound == 1:
                 self.image = Sound_button.image_on
-                pygame.mixer.music.set_volume(VOLUME_SOUNDS_MENU)
+                pygame.mixer.Channel(0).set_volume(VOLUME_SOUNDS_MENU)
+                pygame.mixer.Channel(1).set_volume(0)
             else:
                 self.image = Sound_button.image_off
                 pygame.mixer.Channel(0).set_volume(0)
+                pygame.mixer.Channel(1).set_volume(0)
 
 
 class Roll_up_button(pygame.sprite.Sprite):
@@ -126,21 +136,15 @@ class Roll_up_button(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y, menu_image=False):
+    def __init__(self, sheet, columns, rows, x, y):
         super().__init__(player_sprite)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
-        if menu_image is False:
-            self.image = self.frames[self.cur_frame]
-            self.rect = self.rect.move(x, y)
-            self.rect.x = PLAYER_COORD_X
-            self.rect.y = HEIGHT_SCREEN * 0.5
-        else:
-            self.image = self.frames[0]
-            self.rect = self.rect.move(x, y)
-            self.rect.x = 50
-            self.rect.y = 100
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+        self.rect.x = PLAYER_COORD_X
+        self.rect.y = HEIGHT_SCREEN * 0.5
 
     def cut_sheet(self, sheet, columns, rows):
         # only for Game
@@ -160,12 +164,14 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE]:
             self.rect.y -= JUMP
             self.image = self.frames[self.cur_frame]
-            game_music_play("wing.wav")
+            if sound == 1:
+                game_music_play("wing.wav")
         else:
             self.image = self.frames[0]
         if self.rect.y >= HEIGHT_SCREEN or self.rect.y <= -50 \
                 or pygame.sprite.spritecollideany(self, pipe_sprites):
-            game_music_play("die.wav")
+            if sound == 1:
+                game_music_play("die.wav")
             global speed_pipes
             global count_passed_steam_pipes
             speed_pipes = 2
@@ -178,9 +184,11 @@ class Top_pipe(pygame.sprite.Sprite):
 
     def __init__(self, group):
         super().__init__(group)
+        # variable loading
         global coord_top_pipe_sprite
         global y_ticket
         global x_ticket
+        # location and picture
         self.image = Top_pipe.image
         self.rect = self.image.get_rect()
         coord_top_pipe_sprite = random.randrange(MIN_POS_TOP_PIPE, MAX_POS_TOP_PIPE)
@@ -189,20 +197,27 @@ class Top_pipe(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
                 self.rect.x += SPACE
+        # clearing memory and defining a group of sprites
         pipe_sprites.add(self)
         pygame.sprite.Sprite.remove(self, group)
+        # ticket actions
         ticket_drop_chance = random.randrange(1, TICKET_DROP_CHANCE + 1)
         if ticket_drop_chance == TICKET_DROP_CHANCE:
             y_ticket = coord_top_pipe_sprite + LEN_PIPES
             x_ticket = self.rect.x
             Ticket(ticket_sprites)
+        # check score
+        self.passed = False
 
     def update(self):
+        # variable loading
         global speed_pipes
         global count_passed_steam_pipes
         global score
-        if self.rect.x == PLAYER_COORD_X:
+        # action processing
+        if self.rect.x <= 150 and self.passed is False:
             score += 1
+            self.passed = True
         if self.rect.x > -60:
             self.rect.x -= speed_pipes
         else:
@@ -247,7 +262,6 @@ class Ticket(pygame.sprite.Sprite):
         self.rect.x -= speed_pipes
         if pygame.sprite.spritecollideany(self, player_sprite):
             pygame.mixer.Channel(1).play(pygame.mixer.Sound('data/sounds/point.wav'))
-            pygame.mixer.Channel(1).set_volume(0.1)
             global count_tickets
             count_tickets += 1
             self.kill()
