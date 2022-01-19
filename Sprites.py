@@ -1,4 +1,6 @@
 import random
+
+import Main
 from Constants import *
 from Functions import *
 
@@ -23,6 +25,7 @@ count_tickets = 0
 selected_bird = 'classic'
 selected_background = 'clouds'
 score = 0
+gravity = 3
 
 # sound
 sound = 1
@@ -47,13 +50,12 @@ class Cursor(pygame.sprite.Sprite):
 
 
 class Background_sprite(pygame.sprite.Sprite):
-    images = [load_image(f"sprites/backgrounds/{selected_background}/1.png", color_key=-1),
-              load_image(f"sprites/backgrounds/{selected_background}/2.png", color_key=-1),
-              load_image(f"sprites/backgrounds/{selected_background}/3.png", color_key=-1)]
-
-    def __init__(self, group):
+    def __init__(self, group, name):
         super().__init__(group)
-        self.image = random.choice(Background_sprite.images)
+        self.images = [load_image(f"sprites/backgrounds/{name}/1.png", color_key=-1),
+                  load_image(f"sprites/backgrounds/{name}/2.png", color_key=-1),
+                  load_image(f"sprites/backgrounds/{name}/3.png", color_key=-1)]
+        self.image = random.choice(self.images)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(WIDTH_SCREEN, WIDTH_SCREEN + 150)
         self.rect.y = random.randrange(50, HEIGHT_SCREEN - 80)
@@ -71,22 +73,6 @@ class Background_sprite(pygame.sprite.Sprite):
             self.kill()
 
 
-class Rating_button(pygame.sprite.Sprite):
-    image = load_image("sprites/decoration/main/rating.png", color_key=-1)
-
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = Rating_button.image
-        self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 540
-
-    def update(self, *args):
-        if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
-                self.rect.collidepoint(args[0].pos):
-            print('Rating_button')
-
-
 class Sound_button(pygame.sprite.Sprite):
     image_on = load_image("sprites/decoration/main/sound_on.png", color_key=-1)
     image_off = load_image("sprites/decoration/main/sound_off.png", color_key=-1)
@@ -98,7 +84,7 @@ class Sound_button(pygame.sprite.Sprite):
         else:
             self.image = Sound_button.image_off
         self.rect = self.image.get_rect()
-        self.rect.x = 35
+        self.rect.x = -10
         self.rect.y = 550
 
     def update(self, *args):
@@ -158,7 +144,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.rect.y += GRAVITY
+        self.rect.y += gravity
         pygame.event.get()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
@@ -212,6 +198,7 @@ class Top_pipe(pygame.sprite.Sprite):
     def update(self):
         # variable loading
         global speed_pipes
+        global gravity
         global count_passed_steam_pipes
         global score
         # action processing
@@ -223,6 +210,8 @@ class Top_pipe(pygame.sprite.Sprite):
         else:
             if score % SPEED_INCREASE_FREQUENCY == 0:
                 speed_pipes += RATE_INCREASE_SPEED_PIPE
+                gravity += RATE_INCREASE_gravity
+
             self.kill()
 
 

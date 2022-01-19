@@ -22,6 +22,7 @@ class Entrance:
         self.InitUI()
 
     def processes(self):
+        pygame.display.set_caption('Entrance')
         self.running = True
 
     def loading_data(self):
@@ -105,6 +106,7 @@ class Login:
         self.InitUI()
 
     def processes(self):
+        pygame.display.set_caption('Login')
         self.running = True
         self.error_message = False
 
@@ -153,24 +155,29 @@ class Login:
         input_login = self.login_label.text
         input_password = self.password_label.text
         for user_id, user_login, user_password, gold, max_result, selected_skin, \
-            selected_background, selected_language, sound_status, user_skins in projected_data:
+            selected_background, selected_language, sound_status, user_skins , user_backgrounds in projected_data:
             if input_login == input_login and user_password == input_password:
                 global user
                 global record
                 global language
+                global skins
                 global skin_id
                 global skin
+                global backgrounds
                 global background
-                global skins
+                global background_id
                 user = user_id
                 record = max_result
                 language = selected_language
-                skin_id = selected_skin - 1
+                skin_id = selected_skin
                 skin = self.cur.execute(f"""SELECT name FROM Skins WHERE id = {selected_skin}""").fetchone()
                 skin = skin[0]
-                background = selected_background
+                background_id = selected_background
+                background = self.cur.execute(f"""SELECT name FROM Backgrounds WHERE id = {selected_background}""").fetchone()
+                background = background[0]
                 Sprites.sound = sound_status
                 skins = str(user_skins)
+                backgrounds = str(user_backgrounds)
                 self.con.close()
                 Main().run()
         self.error_message = True
@@ -183,10 +190,7 @@ class Login:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    try:
-                        self.database_search()
-                    except Exception:
-                        self.error_message = True
+                    self.database_search()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
@@ -209,6 +213,7 @@ class Registration:
         self.InitUI()
 
     def processes(self):
+        pygame.display.set_caption('Registration')
         self.running = True
         self.error_message = False
 
@@ -263,9 +268,9 @@ class Registration:
             else:
                 # addition to the database
                 self.cur.execute("""INSERT INTO Users(login, password, gold, max_result, selected_skin, 
-                        selected_background, language, sound_status, user_skins) 
-                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""", (input_login,
-                                                            input_password, 0, 0, 1, 1, 'english', '1', '1'))
+                        selected_background, language, sound_status, user_skins, user_backgrounds) 
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (input_login,
+                                                            input_password, 0, 0, 1, 1, 'english', '1', '1', '1'))
                 self.con.commit()
                 self.con.close()
                 self.running = False
@@ -301,6 +306,7 @@ class Reference:
         self.processes()
 
     def processes(self):
+        pygame.display.set_caption('Reference')
         self.running = True
 
     def rendering(self):
@@ -348,16 +354,14 @@ class Main:
         self.running = True
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/{background}/background.png')
         self.player = load_image(f'sprites/birds/{skin}.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
         self.sound_on_button = load_image('sprites/decoration/main/sound_on.png', color_key=-1)
         self.sound_off_button = load_image('sprites/decoration/main/sound_off.png', color_key=-1)
-        self.rating_button = load_image('sprites/decoration/main/rating.png', color_key=-1)
         self.hide_button = load_image('sprites/decoration/main/hide.png', color_key=-1)
 
     def add_sprites(self):
-        Rating_button(menu_button_sprites)
         Sound_button(menu_button_sprites)
         Roll_up_button(menu_button_sprites)
 
@@ -409,7 +413,7 @@ class Main:
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
         if len(background_sprites) < COUNT_TILES_BACKGROUND:
-            Background_sprite(temporary_sprites)
+            Background_sprite(temporary_sprites, background)
         background_sprites.update()
         background_sprites.draw(self.screen)
         self.screen.blit(self.player, (90, 90), (0, 0, 34, 50))
@@ -480,7 +484,7 @@ class Game:
         self.stop = False
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/{background}/background.png')
         self.wallUp = load_image("sprites/decoration/game/bottom_pipe.png")
         self.wallDown = load_image("sprites/decoration/game/top_pipe.png")
 
@@ -505,7 +509,7 @@ class Game:
         # updating sprites
         if self.stop == False:
             if len(background_sprites) < COUNT_TILES_BACKGROUND:
-                Background_sprite(temporary_sprites)
+                Background_sprite(temporary_sprites, background)
             background_sprites.update()
             if len(pipe_sprites) < COUNT_PIPES:
                 Top_pipe(temporary_sprites)
@@ -526,7 +530,6 @@ class Game:
             for event in pygame.event.get():
                 key = pygame.key.get_pressed()
                 if key[pygame.K_ESCAPE]:
-                    update_gold(user, Sprites.score)
                     Sprites.score = 0
                     self.transition()
                     Main().run()
@@ -552,6 +555,7 @@ class Final:
         tickets_coins = sum([random.randrange(1, MAX_TICKET_PRICE + 1) for ticket in range(Sprites.count_tickets)])
         coins = Sprites.score // COIN_POINT_RATIO
         self.count_coins = tickets_coins + coins
+        update_gold(user, self.count_coins)
         # fixing a record and updating the number of coins
         if record < Sprites.score:
             self.con = sqlite3.connect('data/Database.db')
@@ -566,12 +570,13 @@ class Final:
 
     def language_selection(self):
         if language == 'english':
-            pygame.display.set_caption('Main menu')
+            pygame.display.set_caption('Final menu')
             self.headline = 'Game over'
             self.points_text = 'points'
             self.prompt_text1 = 'Click on K to start a new game'
             self.prompt_text2 = 'Press Esc to exit to the menu'
         else:
+            pygame.display.set_caption('Финальное меню')
             self.headline = 'Конец игры'
             self.points_text = 'очков'
             self.prompt_text1 = 'Нажмите K, чтобы начать новую игру'
@@ -609,16 +614,118 @@ class Final:
                 if event.type == pygame.KEYDOWN:
                     full_cleaning_sprites()
                     if event.key == pygame.K_k:
-                        update_gold(user, Sprites.score // COIN_POINT_RATIO)
                         Sprites.score = 0
                         Sprites.count_tickets = 0
                         self.transition()
                         Game().run()
                     if event.key == pygame.K_ESCAPE:
-                        update_gold(user, Sprites.score // COIN_POINT_RATIO)
                         Sprites.score = 0
                         Sprites.count_tickets = 0
                         self.transition()
+                        Main().run()
+                    if event.key == pygame.K_l:
+                        Sprites.score = 0
+                        Sprites.count_tickets = 0
+                        self.transition()
+                        Rating().run()
+            self.rendering()
+            pygame.display.update()
+
+
+class Rating:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.processes()
+        self.loading_data()
+
+    def processes(self):
+        self.running = True
+
+    def language_selection(self):
+        if language == 'english':
+            pygame.display.set_caption('Rating')
+            self.headline = 'Rating'
+            self.name = 'Name'
+            self.score = 'Score'
+        else:
+            pygame.display.set_caption('Рейтинг')
+            self.headline = 'Рейтинг'
+            self.name = 'Имя'
+            self.score = 'Очки'
+
+    def loading_data(self):
+        self.background = load_image('sprites/decoration/Background.png')
+
+    def draw(self):
+        colors = [('#FEFF0E'), ('#FDCC31'), ('#FF6D00'), ('#FD0100'),
+                  ('#A81063'), ('#5F138F'), ('#1A2B7B'), ('#0000FE'),
+                  ('#1792A4'), ('#118A57'), ('#56AE3E')]
+        pygame.draw.rect(self.screen, colors[0], (0, 0, 600, 55))
+        y = 55
+        for i in range(1, 11):
+            pygame.draw.rect(self.screen, colors[i], (0, y * i, 600, 55))
+
+
+    def rendering(self):
+        self.screen.blit((self.background), (0, 0))
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
+        self.data = self.cur.execute("""SELECT login, max_result FROM USERS""").fetchall()
+        self.con.close()
+        font = pygame.font.Font(None, 40)
+        string_rendered = font.render('Rating', 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.x = 250
+        intro_rect.y = 10
+        screen.blit(string_rendered, intro_rect)
+        string_rendered = font.render('Name', 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.x = 50
+        intro_rect.y = 30
+        screen.blit(string_rendered, intro_rect)
+        string_rendered = font.render('Score', 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.x = 460
+        intro_rect.y = 30
+        screen.blit(string_rendered, intro_rect)
+        intro_text = sorted(self.data, key=lambda x: -x[1])
+        text_coord_n = 50
+        for line in intro_text:
+            name_line = font.render(str(line[0]), 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            text_coord_n += 25
+            intro_rect.top = text_coord_n
+            intro_rect.x = 30
+            text_coord_n += intro_rect.height
+            screen.blit(name_line, intro_rect)
+        text_coord_r = 50
+        for line in intro_text:
+            rez_line = font.render(str(line[1]), 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            text_coord_r += 25
+            intro_rect.top = text_coord_r
+            intro_rect.x = 480
+            text_coord_r += intro_rect.height
+            screen.blit(rez_line, intro_rect)
+        text_coord_s = 50
+        for i in range(1, len(intro_rect) // 2 + 1):
+            name_line = font.render(str(i), 1, pygame.Color('black'))
+            intro_rect = string_rendered.get_rect()
+            text_coord_s += 25
+            intro_rect.top = text_coord_s
+            intro_rect.x = 5
+            text_coord_s += intro_rect.height
+            screen.blit(name_line, intro_rect)
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
                         Main().run()
             self.rendering()
             pygame.display.update()
@@ -631,24 +738,23 @@ class Shop:
         self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
         self.processes()
         self.loading_data()
-        self.language_selection()
         self.InitUI()
 
-    def language_selection(self):
-        if language == 'english':
-            self.select_button_text = 'Selected'
-        else:
-            self.select_button_text = 'Выбрано'
-
     def processes(self):
+        if language == 'english':
+            pygame.display.set_caption('Shop')
+        else:
+            pygame.display.set_caption('Магазин')
         self.running = True
+        self.skin_selection_error = False
+        self.background_selection_error = False
         self.con = sqlite3.connect('data/Database.db')
         self.cur = self.con.cursor()
         self.shop_skins = self.cur.execute("""SELECT * FROM Skins""").fetchall()
-        self.backgrounds = self.cur.execute("""SELECT * FROM Backgrounds""").fetchall()
+        self.shop_backgrounds = self.cur.execute("""SELECT * FROM Backgrounds""").fetchall()
         self.gold = self.cur.execute(f"""SELECT gold FROM Users WHERE id = {user}""").fetchone()[0]
-        self.considered_skin = skin_id
-        self.considered_background = 0
+        self.considered_skin = skin_id - 1
+        self.considered_background = background_id - 1
 
     def InitUI(self):
         self.player_left_button = pygame_gui.elements.UIButton(
@@ -663,7 +769,7 @@ class Shop:
         )
         self.player_select_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((150, 300), (300, 50)),
-            text=self.select_button_text,
+            text='',
             manager=self.manager
         )
         self.background_left_button = pygame_gui.elements.UIButton(
@@ -678,19 +784,20 @@ class Shop:
         )
         self.background_select_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((150, 500), (300, 50)),
-            text=self.select_button_text,
+            text='',
             manager=self.manager
         )
+        self.change_select_buttons_text()
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/{self.shop_backgrounds[self.considered_background][-2]}/background.png')
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
         self.player = load_image(f'sprites/birds/{self.shop_skins[self.considered_skin][-2]}.png')
 
     def rendering(self):
         self.screen.blit(self.background, (0, 0))
         if len(background_sprites) < COUNT_TILES_BACKGROUND:
-            Background_sprite(temporary_sprites)
+            Background_sprite(temporary_sprites, self.shop_backgrounds[self.considered_background][-2])
         background_sprites.update()
         background_sprites.draw(self.screen)
         self.screen.blit(self.player, (280, 230), (0, 0, 34, 50))
@@ -703,10 +810,25 @@ class Shop:
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
+    def left_skin(self):
+        self.considered_skin -= 1
+        if self.considered_skin < 0:
+            self.considered_skin = len(self.shop_skins) - abs(self.considered_skin)
+
+    def right_skin(self):
+        self.considered_skin += 1
+        if self.considered_skin > len(self.shop_skins) - 1:
+            self.considered_skin = self.considered_skin - len(self.shop_skins)
+
     def select_skin(self):
+        global skin
+        global skin_id
         self.cur.execute(f"""UPDATE Users SET selected_skin = {self.considered_skin + 1} WHERE id = {user}""")
+        skin_id = self.considered_skin + 1
+        skin = self.shop_skins[self.considered_skin][1]
 
     def buy_skin(self):
+        global skin
         global skins
         global skin_id
         user_skins = self.cur.execute(f"""SELECT user_skins FROM Users WHERE id = {user}""").fetchone()[0]
@@ -717,22 +839,92 @@ class Shop:
         self.gold = self.gold - self.shop_skins[self.considered_skin][-1]
         skins = f'{skins}{self.considered_skin + 1}'
         skin_id = self.considered_skin + 1
+        skin = self.shop_skins[self.considered_skin][1]
 
-    def change_select_button_text(self):
-        if language == 'english':
-            if self.considered_skin + 1 == skin_id:
-                self.player_select_button.set_text('Selected')
-            if str(self.considered_skin + 1) in skins:
-                self.player_select_button.set_text('Select')
-            if str(self.considered_skin + 1) not in skins:
-                self.player_select_button.set_text('Buy')
+    def left_background(self):
+        self.considered_background -= 1
+        if self.considered_background < 0:
+            self.considered_background = len(self.shop_backgrounds) - abs(self.considered_background)
+
+    def right_background(self):
+        self.considered_background += 1
+        if self.considered_background > len(self.shop_backgrounds) - 1:
+            self.considered_background = self.considered_background - len(self.shop_backgrounds)
+
+    def select_background(self):
+        global background
+        global background_id
+        self.cur.execute(f"""UPDATE Users SET selected_skin = {self.considered_background + 1} WHERE id = {user}""")
+        background_id = self.considered_background + 1
+        background = self.shop_backgrounds[self.considered_background][1]
+
+    def buy_background(self):
+        global background
+        global backgrounds
+        global background_id
+        user_backgrounds = self.cur.execute(f"""SELECT user_backgrounds FROM Users WHERE id = {user}""").fetchone()[0]
+        self.cur.execute(f"""UPDATE Users SET selected_background = {self.considered_background + 1},
+                                                     gold = {self.gold - self.shop_backgrounds[self.considered_background][-1]},
+                                                     user_skins = {str(user_backgrounds) + str(self.considered_background + 1)}
+                                                     WHERE id = {user}""")
+        self.gold = self.gold - self.shop_backgrounds[self.considered_background][-1]
+        backgrounds = f'{backgrounds}{self.considered_background + 1}'
+        background_id = self.considered_background + 1
+        background = self.shop_backgrounds[self.considered_background][1]
+
+    def change_select_buttons_text(self):
+        # to select a skin
+        if self.skin_selection_error is False:
+            if language == 'english':
+                if self.considered_skin + 1 == skin_id:
+                    self.player_select_button.set_text('Selected')
+                elif str(self.considered_skin + 1) in skins:
+                    self.player_select_button.set_text('Select')
+                elif str(self.considered_skin + 1) not in skins:
+                    self.player_select_button.set_text(f'Buy for {self.shop_skins[self.considered_skin][-1]}')
+            else:
+                if self.considered_skin + 1 == skin_id:
+                    self.player_select_button.set_text('Выбрано')
+                elif str(self.considered_skin + 1) in skins:
+                    self.player_select_button.set_text('Выбрать')
+                elif str(self.considered_skin + 1) not in skins:
+                    self.player_select_button.set_text(f'Купить за {self.shop_skins[self.considered_skin][-1]}')
         else:
-            if self.considered_skin + 1 == skin_id:
-                self.player_select_button.set_text('Выбрано')
-            if str(self.considered_skin + 1) in skins:
-                self.player_select_button.set_text('Выбрать')
-            if str(self.considered_skin + 1) not in skins:
-                self.player_select_button.set_text('Купить')
+            if language == 'english':
+                self.player_select_button.set_text('Not enough coins')
+            else:
+                self.player_select_button.set_text('Недостаточно монет')
+            self.skin_selection_error = False
+        # to select a background
+        if self.background_selection_error is False:
+            if language == 'english':
+                if self.considered_background + 1 == background_id:
+                    self.background_select_button.set_text('Selected')
+                elif str(self.considered_background + 1) in backgrounds:
+                    self.background_select_button.set_text('Select')
+                elif str(self.considered_background + 1) not in backgrounds:
+                    self.background_select_button.set_text(f'Buy for {self.shop_backgrounds[self.considered_background][-1]}')
+            else:
+                if self.considered_background + 1 == background_id:
+                    self.background_select_button.set_text('Выбрано')
+                elif str(self.considered_background + 1) in backgrounds:
+                    self.background_select_button.set_text('Выбрать')
+                elif str(self.considered_background + 1) not in backgrounds:
+                    self.background_select_button.set_text(
+                        f'Купить за {self.shop_backgrounds[self.considered_background][-1]}')
+        else:
+            if language == 'english':
+                self.background_select_button.set_text('Not enough coins')
+            else:
+                self.background_select_button.set_text('Недостаточно монет')
+            self.background_selection_error = False
+
+    def change_goods(self):
+        background_sprites.empty()
+        temporary_sprites.empty()
+        self.background = load_image(
+            f'sprites/backgrounds/{self.shop_backgrounds[self.considered_background][-2]}/background.png')
+        self.player = load_image(f'sprites/birds/{self.shop_skins[self.considered_skin][-2]}.png')
 
     def transition(self):
         full_cleaning_sprites()
@@ -746,33 +938,42 @@ class Shop:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    # skin selection
                     if event.ui_element == self.player_left_button:
-                        self.considered_skin -= 1
-                        if self.considered_skin < 0:
-                            self.considered_skin = len(self.shop_skins) - abs(self.considered_skin)
+                        self.left_skin()
+                        self.change_goods()
                     if event.ui_element == self.player_right_button:
-                        self.considered_skin += 1
-                        if self.considered_skin > len(self.shop_skins) - 1:
-                            self.considered_skin = self.considered_skin - len(self.shop_skins)
+                        self.right_skin()
+                        self.change_goods()
                     if event.ui_element == self.player_select_button:
-                        global skin
                         if self.shop_skins[self.considered_skin][-1] <= self.gold \
                                 and str(self.considered_skin + 1) not in skins:
                             self.buy_skin()
+                        elif self.shop_skins[self.considered_skin][-1] > self.gold \
+                                and str(self.considered_skin + 1) not in skins:
+                            self.skin_selection_error = True
                         else:
                             self.select_skin()
                         self.con.commit()
-                        skin = self.shop_skins[self.considered_skin][1]
-                        self.change_select_button_text()
+                    # background selection
                     if event.ui_element == self.background_left_button:
-                        pass
+                        self.left_background()
+                        self.change_goods()
                     if event.ui_element == self.background_right_button:
-                        pass
+                        self.right_background()
+                        self.change_goods()
                     if event.ui_element == self.background_select_button:
-                        pass
-                    self.change_select_button_text()
+                        if self.shop_skins[self.considered_background][-1] <= self.gold \
+                                and str(self.considered_background + 1) not in backgrounds:
+                            self.buy_background()
+                        elif self.shop_skins[self.considered_background][-1] > self.gold \
+                                and str(self.considered_background + 1) not in backgrounds:
+                            self.background_selection_error = True
+                        else:
+                            self.select_background()
+                        self.con.commit()
                     # change the image of the selected skin
-                    self.player = load_image(f'sprites/birds/{self.shop_skins[self.considered_skin][-2]}.png')
+                    self.change_select_buttons_text()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.transition()
@@ -791,6 +992,7 @@ class About:
 
     def language_selection(self):
         if language == 'english':
+            pygame.display.set_caption('About')
             self.line1 = 'The game consists in the fact that you need to control the bird with'
             self.line2 = 'the space bar. It should fly between the pipes.'
             self.line3 = 'Shift - stop or continue the game'
@@ -799,6 +1001,7 @@ class About:
             self.line6 = 'earn points and get for them'
             self.line7 = 'Course 5 to 1'
         else:
+            pygame.display.set_caption('Об игре')
             self.line1 = 'Игра заключается в том, что надо с помощью пробела управлять'
             self.line2 = 'птичкой. Она должна пролетать между труб.'
             self.line3 = 'Shift - остановить или продолжить игру'
@@ -830,9 +1033,6 @@ class About:
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
 
-    def transition(self):
-        self.running = False
-
     def run(self):
         clock = pygame.time.Clock()
         pygame.font.init()
@@ -842,16 +1042,9 @@ class About:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.transition()
+                        self.running = False
                         Main().run()
             pygame.display.update()
-
-
-
-# class Rating:
-# con = sqlite3.connect('название БД')
-#cur = con.cursor()
-#data = cur.execute("""SELECT login, max_result FROM USERS)
 
 
 if __name__ == "__main__":
