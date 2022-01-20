@@ -156,7 +156,7 @@ class Login:
         input_password = self.password_label.text
         for user_id, user_login, user_password, gold, max_result, selected_skin, \
             selected_background, selected_language, sound_status, user_skins, user_backgrounds in projected_data:
-            if input_login == input_login and user_password == input_password:
+            if user_login == input_login and user_password == input_password:
                 global user
                 global record
                 global language
@@ -457,7 +457,8 @@ class Main:
                         self.transition()
                         Shop().run()
                     if event.ui_element == self.settings_button:
-                        print('Settings pressed')
+                        self.transition()
+                        Settings().run()
                     if event.ui_element == self.about_button:
                         About().run()
                     if event.ui_element == self.exit_button:
@@ -575,14 +576,14 @@ class Final:
             self.points_text = 'points'
             self.prompt_text1 = 'Click on K to start a new game'
             self.prompt_text2 = 'Press Esc to exit to the menu'
-            self.prompt_text3 = 'Click cntl to view rating'
+            self.prompt_text3 = 'Click Cntl to view rating'
         else:
             pygame.display.set_caption('Финальное меню')
             self.headline = 'Конец игры'
             self.points_text = 'очков'
             self.prompt_text1 = 'Нажмите K, чтобы начать новую игру'
             self.prompt_text2 = 'Нажмите Esc, чтобы выйти в меню'
-            self.prompt_text3 = 'Нажмите cntl, чтобы посмотреть рейтинг'
+            self.prompt_text3 = 'Нажмите Cntl, чтобы посмотреть рейтинг'
 
     def rendering(self):
         self.screen.fill('#e2b606')
@@ -599,7 +600,7 @@ class Final:
             font = pygame.font.SysFont("Arial", fnt)
             string_rendered = font.render(text, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
-            intro_rect.x = 50
+            intro_rect.x = 30
             intro_rect.top = text_coord
             text_coord += coord
             text_coord += intro_rect.height
@@ -857,7 +858,7 @@ class Shop:
     def select_background(self):
         global background
         global background_id
-        self.cur.execute(f"""UPDATE Users SET selected_skin = {self.considered_background + 1} WHERE id = {user}""")
+        self.cur.execute(f"""UPDATE Users SET selected_background = {self.considered_background + 1} WHERE id = {user}""")
         background_id = self.considered_background + 1
         background = self.shop_backgrounds[self.considered_background][1]
 
@@ -868,7 +869,7 @@ class Shop:
         user_backgrounds = self.cur.execute(f"""SELECT user_backgrounds FROM Users WHERE id = {user}""").fetchone()[0]
         self.cur.execute(f"""UPDATE Users SET selected_background = {self.considered_background + 1},
                                                      gold = {self.gold - self.shop_backgrounds[self.considered_background][-1]},
-                                                     user_skins = {str(user_backgrounds) + str(self.considered_background + 1)}
+                                                     user_backgrounds = {str(user_backgrounds) + str(self.considered_background + 1)}
                                                      WHERE id = {user}""")
         self.gold = self.gold - self.shop_backgrounds[self.considered_background][-1]
         backgrounds = f'{backgrounds}{self.considered_background + 1}'
@@ -980,6 +981,79 @@ class Shop:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.transition()
+                        Main().run()
+                self.manager.process_events(event)
+            self.rendering()
+            pygame.display.update()
+
+
+class Settings:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
+        self.processes()
+        self.InitUI()
+        self.loading_data()
+
+    def processes(self):
+        self.running = True
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/backgrounds/{background}/background.png')
+
+    def InitUI(self):
+        self.options_list = ['english', 'русский']
+        if language == 'english':
+            self.starting_option = 'english'
+        else:
+            self.starting_option = 'русский'
+        self.languages = pygame_gui.elements.UIDropDownMenu(
+            relative_rect=pygame.Rect((280, 20), (300, 40)),
+            options_list=self.options_list,
+            starting_option=self.starting_option,
+            manager=self.manager
+        )
+        self.name_label = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((80, 20), (200, 40)),
+            manager=self.manager
+        )
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        if len(background_sprites) < COUNT_TILES_BACKGROUND:
+            Background_sprite(temporary_sprites, background)
+        background_sprites.update()
+        background_sprites.draw(self.screen)
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def language_selection(self):
+        global language
+        if self.languages.selected_option == 'english':
+            language = 'english'
+        else:
+            language = 'russian'
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
+        self.cur.execute(f"""UPDATE Users SET language = '{language}' WHERE  id = {user}""")
+        self.con.commit()
+        self.con.close()
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                    self.language_selection()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
                         Main().run()
                 self.manager.process_events(event)
             self.rendering()
