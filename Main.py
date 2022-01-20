@@ -155,7 +155,7 @@ class Login:
         input_login = self.login_label.text
         input_password = self.password_label.text
         for user_id, user_login, user_password, gold, max_result, selected_skin, \
-            selected_background, selected_language, sound_status, user_skins , user_backgrounds in projected_data:
+            selected_background, selected_language, sound_status, user_skins, user_backgrounds in projected_data:
             if input_login == input_login and user_password == input_password:
                 global user
                 global record
@@ -575,22 +575,25 @@ class Final:
             self.points_text = 'points'
             self.prompt_text1 = 'Click on K to start a new game'
             self.prompt_text2 = 'Press Esc to exit to the menu'
+            self.prompt_text3 = 'Click cntl to view rating'
         else:
             pygame.display.set_caption('Финальное меню')
             self.headline = 'Конец игры'
             self.points_text = 'очков'
             self.prompt_text1 = 'Нажмите K, чтобы начать новую игру'
             self.prompt_text2 = 'Нажмите Esc, чтобы выйти в меню'
+            self.prompt_text3 = 'Нажмите cntl, чтобы посмотреть рейтинг'
 
     def rendering(self):
         self.screen.fill('#e2b606')
-        intro_text = [(self.headline, 20, 120), (f'+ {self.count_coins}', 10, 60),
+        intro_text = [(self.headline, 0, 120), (f'+ {self.count_coins}', 10, 60),
                       (f'+ {Sprites.score} {self.points_text}', 10, 60),
-                      (f'+ {Sprites.count_tickets}', 40, 60),
-                      (self.prompt_text1, 15, 45),
-                      (self.prompt_text2, 30, 45)]
-        self.screen.blit((self.coin), (150, 195))
-        self.screen.blit((self.ticket), (160, 350))
+                      (f'+ {Sprites.count_tickets}', 15, 60),
+                      (self.prompt_text1, 15, 35),
+                      (self.prompt_text2, 15, 35),
+                      (self.prompt_text3, 15, 35)]
+        self.screen.blit((self.coin), (150, 175))
+        self.screen.blit((self.ticket), (160, 330))
         text_coord = 30
         for text, coord, fnt in intro_text:
             font = pygame.font.SysFont("Arial", fnt)
@@ -623,7 +626,7 @@ class Final:
                         Sprites.count_tickets = 0
                         self.transition()
                         Main().run()
-                    if event.key == pygame.K_l:
+                    if event.key == pygame.K_LCTRL:
                         Sprites.score = 0
                         Sprites.count_tickets = 0
                         self.transition()
@@ -993,35 +996,38 @@ class About:
     def language_selection(self):
         if language == 'english':
             pygame.display.set_caption('About')
-            self.line1 = 'The game consists in the fact that you need to control the bird with'
-            self.line2 = 'the space bar. It should fly between the pipes.'
+            self.line1 = 'The game consists in the fact that you need to control the bird'
+            self.line2 = 'with the space bar. It should fly between the pipes.'
             self.line3 = 'Shift - stop or continue the game'
-            self.line4 = 'Esc - log off play or shop or settings or about'
-            self.line5 = 'collect everything to try your luck'
-            self.line6 = 'earn points and get for them'
-            self.line7 = 'Course 5 to 1'
+            self.line4 = 'Esc - exit'
+            self.line5 = 'collect ticket'
+            self.line6 = 'earn points and get from 1 to 10 coins'
+            self.line7 = '5 score = 1 coin'
+            self.line8 = 'For coins you can buy skins and backgrounds'
         else:
             pygame.display.set_caption('Об игре')
-            self.line1 = 'Игра заключается в том, что надо с помощью пробела управлять'
-            self.line2 = 'птичкой. Она должна пролетать между труб.'
+            self.line1 = 'Игра заключается в том, что надо с помощью пробела'
+            self.line2 = 'управлять птичкой. Она должна пролетать между труб.'
             self.line3 = 'Shift - остановить или продолжить игру'
-            self.line4 = 'Esc - выйти из игры или магазина или настроек или об игре'
-            self.line5 = 'Собирай все и испытай свою удачу'
+            self.line4 = 'Esc - выйти'
+            self.line5 = 'Собирай билетики и получай от 1 до 10 монет'
             self.line6 = 'Зарабатывай баллы и меняй их на монетки'
-            self.line7 = 'Курс 5 к 1'
+            self.line7 = '5 очков = 1 монетка'
+            self.line8  = 'За монетки можно покупать скины и фоны'
 
     def processes(self):
         self.running = True
 
     def rendering(self):
         self.screen.fill('#e2b606')
-        intro_text = [(f'{self.line1}', 10, 30),
-                      (f'{self.line2}', 20, 30),
-                      (f'{self.line3}', 10, 30),
-                      (f'{self.line4}', 20, 30),
-                      (f'{self.line5}', 20, 30),
-                      (f'{self.line6}', 20, 30),
-                      (f'{self.line7}', 20, 30)]
+        intro_text = [(f'{self.line1}', 10, 25),
+                      (f'{self.line2}', 20, 25),
+                      (f'{self.line3}', 10, 25),
+                      (f'{self.line4}', 20, 25),
+                      (f'{self.line5}', 20, 25),
+                      (f'{self.line6}', 20, 25),
+                      (f'{self.line7}', 20, 25),
+                      (f'{self.line8}', 20, 25)]
         text_coord = 30
         for text, coord, fnt in intro_text:
             font = pygame.font.SysFont("Arial", fnt)
