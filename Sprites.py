@@ -1,6 +1,4 @@
 import random
-
-import Main
 from Constants import *
 from Functions import *
 

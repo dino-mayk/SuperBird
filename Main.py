@@ -427,16 +427,6 @@ class Main:
         if pygame.mouse.get_focused():
             main_sprites.draw(self.screen)
 
-    def show_confirmation_dialog(self):
-        confirmation_dialog = pygame_gui.windows.UIConfirmationDialog(
-            rect=pygame.Rect((100, 150), (300, 200)),
-            manager=self.manager,
-            window_title='Exit',
-            action_long_desc=self.question,
-            action_short_name='Yes',
-            blocking=True
-        )
-
     def transition(self):
         full_cleaning_sprites()
         self.running = False
@@ -450,11 +440,10 @@ class Main:
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    self.transition()
                     if event.ui_element == self.play_button:
-                        self.transition()
                         Game().run()
                     if event.ui_element == self.shop_button:
-                        self.transition()
                         Shop().run()
                     if event.ui_element == self.settings_button:
                         self.transition()
@@ -462,10 +451,7 @@ class Main:
                     if event.ui_element == self.about_button:
                         About().run()
                     if event.ui_element == self.exit_button:
-                        self.show_confirmation_dialog()
-                if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
-                    self.transition()
-                    sys.exit()
+                        Entrance().run()
                 menu_button_sprites.update(event)
                 self.manager.process_events(event)
             self.rendering()
@@ -641,7 +627,7 @@ class Rating:
         self.size = self.width, self.height = SIZE_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
         self.processes()
-        self.loading_data()
+        self.draw()
 
     def processes(self):
         self.running = True
@@ -658,21 +644,15 @@ class Rating:
             self.name = 'Имя'
             self.score = 'Очки'
 
-    def loading_data(self):
-        self.background = load_image('sprites/decoration/Background.png')
-
     def draw(self):
-        colors = [('#FEFF0E'), ('#FDCC31'), ('#FF6D00'), ('#FD0100'),
-                  ('#A81063'), ('#5F138F'), ('#1A2B7B'), ('#0000FE'),
-                  ('#1792A4'), ('#118A57'), ('#56AE3E')]
+        colors = [('#e2b606'), ('#c76906')]
         pygame.draw.rect(self.screen, colors[0], (0, 0, 600, 55))
         y = 55
         for i in range(1, 11):
-            pygame.draw.rect(self.screen, colors[i], (0, y * i, 600, 55))
-
+            pygame.draw.rect(self.screen, colors[i % 2], (0, y * i, 600, 55))
 
     def rendering(self):
-        self.screen.blit((self.background), (0, 0))
+        # self.screen.fill('#e2b606')
         self.con = sqlite3.connect('data/Database.db')
         self.cur = self.con.cursor()
         self.data = self.cur.execute("""SELECT login, max_result FROM USERS""").fetchall()
@@ -713,7 +693,7 @@ class Rating:
             text_coord_r += intro_rect.height
             screen.blit(rez_line, intro_rect)
         text_coord_s = 50
-        for i in range(1, len(intro_rect) // 2 + 1):
+        for i in range(1, len(intro_text) + 1):
             name_line = font.render(str(i), 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord_s += 25
@@ -1049,6 +1029,112 @@ class Settings:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEMOTION:
                     main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                    self.language_selection()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        Main().run()
+                self.manager.process_events(event)
+            self.rendering()
+            pygame.display.update()
+
+
+class Settings:
+    def __init__(self):
+        self.size = self.width, self.height = SIZE_SCREEN
+        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
+        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
+        self.processes()
+        self.InitUI()
+        self.loading_data()
+
+    def processes(self):
+        self.running = True
+
+    def loading_data(self):
+        self.background = load_image(f'sprites/backgrounds/{background}/background.png')
+
+    def InitUI(self):
+        self.options_list = ['english', 'русский']
+        if language == 'english':
+            self.starting_option = 'english'
+            self.new_name_button_text = 'Set new login'
+        else:
+            self.starting_option = 'русский'
+            self.new_name_button_text = 'Установить новый логин'
+        self.languages = pygame_gui.elements.UIDropDownMenu(
+            relative_rect=pygame.Rect((320, 20), (260, 40)),
+            options_list=self.options_list,
+            starting_option=self.starting_option,
+            manager=self.manager
+        )
+        self.new_login_label = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((10, 20), (300, 40)),
+            manager=self.manager
+        )
+        self.new_login_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((10, 70), (300, 50)),
+            text=self.new_name_button_text,
+            manager=self.manager
+        )
+
+    def rendering(self):
+        self.screen.blit(self.background, (0, 0))
+        if len(background_sprites) < COUNT_TILES_BACKGROUND:
+            Background_sprite(temporary_sprites, background)
+        background_sprites.update()
+        background_sprites.draw(self.screen)
+        self.manager.update(self.time_delta)
+        self.manager.draw_ui(self.screen)
+        if pygame.mouse.get_focused():
+            main_sprites.draw(self.screen)
+
+    def language_selection(self):
+        global language
+        if self.languages.selected_option == 'english':
+            language = 'english'
+        else:
+            language = 'russian'
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
+        self.cur.execute(f"""UPDATE Users SET language = '{language}' WHERE  id = {user}""")
+        self.con.commit()
+        self.con.close()
+
+    def set_new_login(self):
+        try:
+            if login_check(self.new_login_label.text) is True:
+                self.con = sqlite3.connect('data/Database.db')
+                self.cur = self.con.cursor()
+                self.cur.execute(f"""UPDATE Users SET login = '{self.new_login_label.text}' WHERE  id = {user}""")
+                self.con.commit()
+                self.con.close()
+                if language == 'english':
+                    self.new_login_button.set_text('Now you have a new login')
+                else:
+                    self.new_login_button.set_text('Теперь у вас новый логин')
+            else:
+                if language == 'english':
+                    self.new_login_button.set_text('Incorrect login')
+                else:
+                    self.new_login_button.set_text('Некорректный логин')
+        except sqlite3.IntegrityError:
+            if language == 'english':
+                self.new_login_button.set_text('This login already exists')
+            else:
+                self.new_login_button.set_text('Такой логин уже есть')
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while self.running:
+            self.time_delta = clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEMOTION:
+                    main_sprites.update(event.pos)
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.new_login_button:
+                        self.set_new_login()
                 if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     self.language_selection()
                 if event.type == pygame.KEYDOWN:
