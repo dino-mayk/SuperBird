@@ -1,15 +1,6 @@
-import sys, pygame_gui
 import Sprites
 from Sprites import *
-
-
-def full_cleaning_sprites():
-    background_sprites.empty()
-    menu_button_sprites.empty()
-    player_sprite.empty()
-    pipe_sprites.empty()
-    ticket_sprites.empty()
-    temporary_sprites.empty()
+import pygame_gui, sys
 
 
 class Entrance:
@@ -26,7 +17,7 @@ class Entrance:
         self.running = True
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/clouds/background.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
 
     def InitUI(self):
@@ -111,7 +102,7 @@ class Login:
         self.error_message = False
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/clouds/background.png')
 
     def InitUI(self):
         self.login_button = pygame_gui.elements.UIButton(
@@ -157,6 +148,7 @@ class Login:
         for user_id, user_login, user_password, gold, max_result, selected_skin, \
             selected_background, selected_language, sound_status, user_skins, user_backgrounds in projected_data:
             if user_login == input_login and user_password == input_password:
+                # variable declaration
                 global user
                 global record
                 global language
@@ -166,19 +158,24 @@ class Login:
                 global backgrounds
                 global background
                 global background_id
+                # variable assignment
                 user = user_id
                 record = max_result
                 language = selected_language
+                Sprites.sound = sound_status
                 skin_id = selected_skin
                 skin = self.cur.execute(f"""SELECT name FROM Skins WHERE id = {selected_skin}""").fetchone()
                 skin = skin[0]
                 background_id = selected_background
                 background = self.cur.execute(f"""SELECT name FROM Backgrounds WHERE id = {selected_background}""").fetchone()
                 background = background[0]
-                Sprites.sound = sound_status
                 skins = str(user_skins)
                 backgrounds = str(user_backgrounds)
+                # exit
                 self.con.close()
+                background_music_play()
+                if Sprites.sound == 0:
+                    pygame.mixer.Channel(0).set_volume(0)
                 Main().run()
         self.error_message = True
 
@@ -218,7 +215,7 @@ class Registration:
         self.error_message = False
 
     def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{selected_background}/background.png')
+        self.background = load_image(f'sprites/backgrounds/clouds/background.png')
 
     def InitUI(self):
         self.login_line = pygame_gui.elements.UITextEntryLine(
@@ -357,12 +354,9 @@ class Main:
         self.background = load_image(f'sprites/backgrounds/{background}/background.png')
         self.player = load_image(f'sprites/birds/{skin}.png')
         self.main_text = load_image('sprites/decoration/main/main_text.png', color_key=-1)
-        self.sound_on_button = load_image('sprites/decoration/main/sound_on.png', color_key=-1)
-        self.sound_off_button = load_image('sprites/decoration/main/sound_off.png', color_key=-1)
         self.hide_button = load_image('sprites/decoration/main/hide.png', color_key=-1)
 
     def add_sprites(self):
-        Sound_button(menu_button_sprites)
         Roll_up_button(menu_button_sprites)
 
     def language_selection(self):
@@ -451,6 +445,7 @@ class Main:
                     if event.ui_element == self.about_button:
                         About().run()
                     if event.ui_element == self.exit_button:
+                        pygame.mixer.Channel(0).pause()
                         Entrance().run()
                 menu_button_sprites.update(event)
                 self.manager.process_events(event)
@@ -477,6 +472,7 @@ class Game:
 
     def add_sprites(self):
         Player(load_image(f"sprites/birds/{skin}.png"), 4, 1, 50, 50)
+        Sprites.gravity = INITIAL_GRAVITY
 
     def language_selection(self):
         if language == 'english':
@@ -494,7 +490,7 @@ class Game:
         self.font = pygame.font.SysFont("Arial", 50)
         self.screen.blit(self.font.render(str(Sprites.score), -1, '#c76906'), (HEIGHT_SCREEN * 0.5, 10))
         # updating sprites
-        if self.stop == False:
+        if self.stop is False:
             if len(background_sprites) < COUNT_TILES_BACKGROUND:
                 Background_sprite(temporary_sprites, background)
             background_sprites.update()
@@ -515,13 +511,13 @@ class Game:
         while self.running:
             clock.tick(FPS)
             for event in pygame.event.get():
-                key = pygame.key.get_pressed()
-                if key[pygame.K_ESCAPE]:
-                    Sprites.score = 0
-                    self.transition()
-                    Main().run()
-                if key[pygame.K_LSHIFT]:
-                    self.stop = not self.stop
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_TAB:
+                        self.stop = not self.stop
+                    if event.key == pygame.K_ESCAPE:
+                        Sprites.score = 0
+                        self.transition()
+                        Main().run()
             self.rendering()
             if len(player_sprite) == 0:
                 self.transition()
@@ -550,6 +546,11 @@ class Final:
             self.cur.execute(f"""UPDATE Users SET max_result = {Sprites.score} WHERE id = {user}""")
             self.con.commit()
             self.con.close()
+
+    def sound_control(self):
+        pygame.mixer.Channel(0).set_volume(0)
+        if Sprites.sound == 1:
+            game_music_play('defeat.mp3')
 
     def loading_data(self):
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
@@ -598,11 +599,14 @@ class Final:
 
     def run(self):
         clock = pygame.time.Clock()
+        self.sound_control()
         while self.running:
             clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     full_cleaning_sprites()
+                    if Sprites.sound == 1:
+                        background_music_play()
                     if event.key == pygame.K_k:
                         Sprites.score = 0
                         Sprites.count_tickets = 0
@@ -627,7 +631,6 @@ class Rating:
         self.size = self.width, self.height = SIZE_SCREEN
         self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
         self.processes()
-        self.draw()
 
     def processes(self):
         self.running = True
@@ -644,15 +647,8 @@ class Rating:
             self.name = 'Имя'
             self.score = 'Очки'
 
-    def draw(self):
-        colors = [('#e2b606'), ('#c76906')]
-        pygame.draw.rect(self.screen, colors[0], (0, 0, 600, 55))
-        y = 55
-        for i in range(1, 11):
-            pygame.draw.rect(self.screen, colors[i % 2], (0, y * i, 600, 55))
-
     def rendering(self):
-        # self.screen.fill('#e2b606')
+        self.screen.fill('#e2b606')
         self.con = sqlite3.connect('data/Database.db')
         self.cur = self.con.cursor()
         self.data = self.cur.execute("""SELECT login, max_result FROM USERS""").fetchall()
@@ -674,13 +670,15 @@ class Rating:
         intro_rect.y = 30
         screen.blit(string_rendered, intro_rect)
         intro_text = sorted(self.data, key=lambda x: -x[1])
+        if len(intro_text) >= 10:
+            intro_text = intro_text[:10]
         text_coord_n = 50
         for line in intro_text:
             name_line = font.render(str(line[0]), 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord_n += 25
             intro_rect.top = text_coord_n
-            intro_rect.x = 30
+            intro_rect.x = 45
             text_coord_n += intro_rect.height
             screen.blit(name_line, intro_rect)
         text_coord_r = 50
@@ -694,7 +692,7 @@ class Rating:
             screen.blit(rez_line, intro_rect)
         text_coord_s = 50
         for i in range(1, len(intro_text) + 1):
-            name_line = font.render(str(i), 1, pygame.Color('black'))
+            name_line = font.render(f'{i}.', 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord_s += 25
             intro_rect.top = text_coord_s
@@ -983,89 +981,24 @@ class Settings:
         self.background = load_image(f'sprites/backgrounds/{background}/background.png')
 
     def InitUI(self):
-        self.options_list = ['english', 'русский']
-        if language == 'english':
-            self.starting_option = 'english'
-        else:
-            self.starting_option = 'русский'
-        self.languages = pygame_gui.elements.UIDropDownMenu(
-            relative_rect=pygame.Rect((280, 20), (300, 40)),
-            options_list=self.options_list,
-            starting_option=self.starting_option,
-            manager=self.manager
-        )
-        self.name_label = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((80, 20), (200, 40)),
-            manager=self.manager
-        )
-
-    def rendering(self):
-        self.screen.blit(self.background, (0, 0))
-        if len(background_sprites) < COUNT_TILES_BACKGROUND:
-            Background_sprite(temporary_sprites, background)
-        background_sprites.update()
-        background_sprites.draw(self.screen)
-        self.manager.update(self.time_delta)
-        self.manager.draw_ui(self.screen)
-        if pygame.mouse.get_focused():
-            main_sprites.draw(self.screen)
-
-    def language_selection(self):
-        global language
-        if self.languages.selected_option == 'english':
-            language = 'english'
-        else:
-            language = 'russian'
-        self.con = sqlite3.connect('data/Database.db')
-        self.cur = self.con.cursor()
-        self.cur.execute(f"""UPDATE Users SET language = '{language}' WHERE  id = {user}""")
-        self.con.commit()
-        self.con.close()
-
-    def run(self):
-        clock = pygame.time.Clock()
-        while self.running:
-            self.time_delta = clock.tick(FPS)
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEMOTION:
-                    main_sprites.update(event.pos)
-                if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-                    self.language_selection()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.running = False
-                        Main().run()
-                self.manager.process_events(event)
-            self.rendering()
-            pygame.display.update()
-
-
-class Settings:
-    def __init__(self):
-        self.size = self.width, self.height = SIZE_SCREEN
-        self.screen = pygame.display.set_mode(self.size, flags=pygame.NOFRAME)
-        self.manager = pygame_gui.UIManager((600, 600), 'data/sprites/decoration/theme.json')
-        self.processes()
-        self.InitUI()
-        self.loading_data()
-
-    def processes(self):
-        self.running = True
-
-    def loading_data(self):
-        self.background = load_image(f'sprites/backgrounds/{background}/background.png')
-
-    def InitUI(self):
-        self.options_list = ['english', 'русский']
         if language == 'english':
             self.starting_option = 'english'
             self.new_name_button_text = 'Set new login'
+            if Sprites.sound == 1:
+                self.sound_button_text = 'sound on'
+            else:
+                self.sound_button_text = 'sound off'
         else:
             self.starting_option = 'русский'
             self.new_name_button_text = 'Установить новый логин'
+            if Sprites.sound == 1:
+                self.sound_button_text = 'звук включён'
+            else:
+                self.sound_button_text = 'звук выключен'
+
         self.languages = pygame_gui.elements.UIDropDownMenu(
             relative_rect=pygame.Rect((320, 20), (260, 40)),
-            options_list=self.options_list,
+            options_list=['english', 'русский'],
             starting_option=self.starting_option,
             manager=self.manager
         )
@@ -1076,6 +1009,11 @@ class Settings:
         self.new_login_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((10, 70), (300, 50)),
             text=self.new_name_button_text,
+            manager=self.manager
+        )
+        self.sound_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((320, 70), (260, 50)),
+            text=self.sound_button_text,
             manager=self.manager
         )
 
@@ -1125,6 +1063,47 @@ class Settings:
             else:
                 self.new_login_button.set_text('Такой логин уже есть')
 
+    def sound_change(self):
+        if Sprites.sound == 1:
+            Sprites.sound = 0
+            pygame.mixer.Channel(0).set_volume(0)
+            if language == 'english':
+                self.sound_button.set_text('sound off')
+            else:
+                self.sound_button.set_text('звук выключен')
+        else:
+            Sprites.sound = 1
+            pygame.mixer.Channel(0).set_volume(0.01)
+            if language == 'english':
+                self.sound_button.set_text('sound on')
+            else:
+                self.sound_button.set_text('звук включён')
+        self.con = sqlite3.connect('data/Database.db')
+        self.cur = self.con.cursor()
+        self.cur.execute(f"""UPDATE Users SET sound_status = {Sprites.sound} WHERE  id = {user}""")
+        self.con.commit()
+        self.con.close()
+
+    def applying_language(self):
+        if language == 'english':
+            if self.new_login_button.text == 'Установить новый логин':
+                self.new_login_button.set_text('Set new login')
+            elif self.new_login_button.text == 'Теперь у вас новый логин':
+                self.new_login_button.set_text('Now you have a new login')
+            elif self.new_login_button.text == 'Некорректный логин':
+                self.new_login_button.set_text('Incorrect login')
+            elif self.new_login_button.text == 'Такой логин уже есть':
+                self.new_login_button.set_text('This login already exists')
+        else:
+            if self.new_login_button.text == 'Set new login':
+                self.new_login_button.set_text('Установить новый логин')
+            elif self.new_login_button.text == 'Now you have a new login':
+                self.new_login_button.set_text('Теперь у вас новый логин')
+            elif self.new_login_button.text == 'Incorrect login':
+                self.new_login_button.set_text('Некорректный логин')
+            elif self.new_login_button.text == 'This login already exists':
+                self.new_login_button.set_text('Такой логин уже есть')
+
     def run(self):
         clock = pygame.time.Clock()
         while self.running:
@@ -1135,8 +1114,11 @@ class Settings:
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.new_login_button:
                         self.set_new_login()
+                    if event.ui_element == self.sound_button:
+                        self.sound_change()
                 if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     self.language_selection()
+                    self.applying_language()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
@@ -1158,7 +1140,7 @@ class About:
             pygame.display.set_caption('About')
             self.line1 = 'The game consists in the fact that you need to control the bird'
             self.line2 = 'with the space bar. It should fly between the pipes.'
-            self.line3 = 'Shift - stop or continue the game'
+            self.line3 = 'Tab - stop or continue the game'
             self.line4 = 'Esc - exit'
             self.line5 = 'collect ticket'
             self.line6 = 'earn points and get from 1 to 10 coins'
@@ -1168,7 +1150,7 @@ class About:
             pygame.display.set_caption('Об игре')
             self.line1 = 'Игра заключается в том, что надо с помощью пробела'
             self.line2 = 'управлять птичкой. Она должна пролетать между труб.'
-            self.line3 = 'Shift - остановить или продолжить игру'
+            self.line3 = 'Tab - остановить или продолжить игру'
             self.line4 = 'Esc - выйти'
             self.line5 = 'Собирай билетики и получай от 1 до 10 монет'
             self.line6 = 'Зарабатывай баллы и меняй их на монетки'
