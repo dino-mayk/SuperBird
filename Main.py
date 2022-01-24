@@ -1119,6 +1119,7 @@ class Settings:
                 if event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     self.language_selection()
                     self.applying_language()
+                    self.sound_change()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False

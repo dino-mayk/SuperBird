@@ -11,7 +11,7 @@ SPEED_TILES_BACKGROUND = 2
 
 # game
 PLAYER_COORD_X = 200
-JUMP = 10
+JUMP = 8
 COUNT_PIPES = 4
 LEN_PIPES = 530
 MIN_POS_TOP_PIPE = -390  # the sprite is long and therefore overseas
