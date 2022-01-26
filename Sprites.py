@@ -5,8 +5,7 @@ import random
 
 # init
 pygame.init()
-size = width, height = SIZE_SCREEN
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(DEFAULT_SIZE_SCREEN)
 
 
 # sprites groups
@@ -64,12 +63,12 @@ class Background_sprite(pygame.sprite.Sprite):
                   load_image(f"sprites/backgrounds/{name}/3.png", color_key=-1)]
         self.image = random.choice(self.images)
         self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(WIDTH_SCREEN, WIDTH_SCREEN + 150)
-        self.rect.y = random.randrange(50, HEIGHT_SCREEN - 80)
+        self.rect.x = random.randrange(DEFAULT_WIDTH_SCREEN, DEFAULT_WIDTH_SCREEN + 150)
+        self.rect.y = random.randrange(50, DEFAULT_HEIGHT_SCREEN - 80)
         if pygame.sprite.spritecollideany(self, background_sprites):
             while pygame.sprite.spritecollideany(self, background_sprites):
-                self.rect.x = random.randrange(WIDTH_SCREEN, WIDTH_SCREEN + WIDTH_SCREEN * 0.5)
-                self.rect.y = random.randrange(50, HEIGHT_SCREEN - 80)
+                self.rect.x = random.randrange(DEFAULT_WIDTH_SCREEN, DEFAULT_WIDTH_SCREEN + DEFAULT_WIDTH_SCREEN * 0.5)
+                self.rect.y = random.randrange(50, DEFAULT_HEIGHT_SCREEN - 80)
         background_sprites.add(self)
         pygame.sprite.Sprite.remove(self, group)
 
@@ -105,7 +104,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(x, y)
         self.rect.x = PLAYER_COORD_X
-        self.rect.y = HEIGHT_SCREEN * 0.5
+        self.rect.y = DEFAULT_HEIGHT_SCREEN * 0.5
 
     def cut_sheet(self, sheet, columns, rows):
         # only for Game
@@ -130,7 +129,7 @@ class Player(pygame.sprite.Sprite):
                 game_music_play("wing.wav")
         else:
             self.image = self.frames[0]
-        if self.rect.y >= HEIGHT_SCREEN or self.rect.y <= -50 \
+        if self.rect.y >= DEFAULT_HEIGHT_SCREEN or self.rect.y <= -50 \
                 or pygame.sprite.spritecollideany(self, pipe_sprites):
             if sound == 1:
                 pygame.mixer.Channel(2).play(pygame.mixer.Sound('data/sounds/death.wav'))
@@ -156,7 +155,7 @@ class Top_pipe(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         coord_top_pipe_sprite = random.randrange(MIN_POS_TOP_PIPE, MAX_POS_TOP_PIPE)
         self.rect.y = coord_top_pipe_sprite
-        self.rect.x = WIDTH_SCREEN
+        self.rect.x = DEFAULT_WIDTH_SCREEN
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
                 self.rect.x += SPACE
@@ -199,7 +198,7 @@ class Bottom_pipe(pygame.sprite.Sprite):
         self.image = Bottom_pipe.image
         self.rect = self.image.get_rect()
         self.rect.y = coord_top_pipe_sprite + LEN_PIPES + GAP
-        self.rect.x = WIDTH_SCREEN
+        self.rect.x = DEFAULT_WIDTH_SCREEN
         if pygame.sprite.spritecollideany(self, pipe_sprites):
             while pygame.sprite.spritecollideany(self, pipe_sprites):
                 self.rect.x += SPACE
