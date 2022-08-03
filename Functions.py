@@ -47,3 +47,11 @@ def update_gold(user_id, gold_count):
         id = {user_id}) + {gold_count} WHERE id = {user_id}""")
     con.commit()
     con.close()
+
+
+def set_new_record(score, user):
+    con = sqlite3.connect('data/Database.db')
+    cur = con.cursor()
+    cur.execute(f"""UPDATE Users SET max_result = {score} WHERE id = {user}""")
+    con.commit()
+    con.close()

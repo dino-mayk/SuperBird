@@ -203,9 +203,9 @@ class Registration:
         self.processes()
         self.loading_data()
         self.InitUI()
+        pygame.display.set_caption('Registration')
 
     def processes(self):
-        pygame.display.set_caption('Registration')
         self.running = True
         self.error_message = False
 
@@ -253,14 +253,14 @@ class Registration:
             self.con = sqlite3.connect('data/Database.db')
             self.cur = self.con.cursor()
             # check
-            if login_check(self.login_input) is False or password_check(self.password_input) is False:
+            if login_check(self.login_input.text) is False or password_check(self.password_input.text) is False:
                 self.error_message = True
             else:
                 # addition to the database
                 self.cur.execute("""INSERT INTO Users(login, password, gold, max_result, selected_skin, 
                         selected_background, language, sound_status, user_skins, user_backgrounds) 
-                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (self.login_input,
-                                self.password_input, 0, 0, 1, 1, 'english', '1', '1', '1'))
+                        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (self.login_input.text,
+                                self.password_input.text, 0, 0, 1, 1, 'english', '1', '1', '1'))
                 self.con.commit()
                 self.con.close()
                 self.running = False
@@ -527,17 +527,16 @@ class Final:
         self.count_coins = tickets_coins + coins
         update_gold(user, self.count_coins)
         # fixing a record and updating the number of coins
+        global record
         if record < Sprites.score:
-            self.con = sqlite3.connect('data/Database.db')
-            self.cur = self.con.cursor()
-            self.cur.execute(f"""UPDATE Users SET max_result = {Sprites.score} WHERE id = {user}""")
-            self.con.commit()
-            self.con.close()
+            record = Sprites.score
+            set_new_record(Sprites.score, user)
 
     def sound_control(self):
         pygame.mixer.Channel(0).set_volume(0)
         if Sprites.sound == 1:
-            game_music_play('defeat.mp3')
+            pygame.mixer.Channel(3).set_volume(0.05)
+            pygame.mixer.Channel(3).play(pygame.mixer.Sound('data/sounds/defeat.mp3'))
 
     def loading_data(self):
         self.coin = load_image('sprites/decoration/game/coin.png', color_key=-1)
@@ -581,6 +580,9 @@ class Final:
             screen.blit(string_rendered, intro_rect)
 
     def transition(self):
+        pygame.mixer.Channel(3).set_volume(0)
+        Sprites.score = 0
+        Sprites.count_tickets = 0
         full_cleaning_sprites()
         self.running = False
 
@@ -591,22 +593,15 @@ class Final:
             clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    full_cleaning_sprites()
                     if Sprites.sound == 1:
                         background_music_play()
                     if event.key == pygame.K_k:
-                        Sprites.score = 0
-                        Sprites.count_tickets = 0
                         self.transition()
                         Game().run()
                     if event.key == pygame.K_ESCAPE:
-                        Sprites.score = 0
-                        Sprites.count_tickets = 0
                         self.transition()
                         Main().run()
                     if event.key == pygame.K_LCTRL:
-                        Sprites.score = 0
-                        Sprites.count_tickets = 0
                         self.transition()
                         Rating().run()
             self.rendering()
@@ -623,7 +618,6 @@ class Rating:
         self.running = True
 
     def language_selection(self):
-        print(language)
         if language == 'english':
             pygame.display.set_caption('Rating')
             self.headline = 'Rating'

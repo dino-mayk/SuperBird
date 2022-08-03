@@ -37,7 +37,7 @@ gravity = INITIAL_GRAVITY
 
 # sound
 sound = 1
-pygame.mixer.set_num_channels(3)
+pygame.mixer.set_num_channels(4)
 pygame.mixer.Channel(1).set_volume(0.1)
 
 
@@ -135,9 +135,7 @@ class Player(pygame.sprite.Sprite):
                 pygame.mixer.Channel(2).play(pygame.mixer.Sound('data/sounds/death.wav'))
                 pygame.mixer.Channel(2).set_volume(0.1)
             global speed_pipes
-            global count_passed_steam_pipes
             speed_pipes = 2
-            count_passed_steam_pipes = 0
             self.kill()
 
 
